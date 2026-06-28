@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FortisPH — Invest. Trade. Earn.</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <style>
+    .stats-bar { background: var(--bg-surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 16px 60px; display: flex; align-items: center; justify-content: center; gap: 12px; font-size: 14px; }
+    .stats-bar .label { color: var(--text-muted); }
+    .stats-bar .value { color: var(--accent-green); font-weight: 700; font-size: 18px; }
+    .how-it-works { padding: 80px 60px; background: var(--bg-surface); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+    .how-it-works h2 { text-align: center; font-size: 32px; font-weight: 700; margin-bottom: 52px; }
+    .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 32px; max-width: 900px; margin: 0 auto; }
+    .step { text-align: center; padding: 32px 24px; background: var(--bg-primary); border: 1px solid var(--border); border-radius: var(--radius-card); }
+    .step-num { width: 48px; height: 48px; border-radius: 50%; background: rgba(245,200,66,0.15); color: var(--accent-gold); font-size: 20px; font-weight: 700; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; }
+    .step h3 { font-size: 17px; font-weight: 600; margin-bottom: 10px; }
+    .step p { font-size: 14px; color: var(--text-muted); line-height: 1.6; }
+    .providers-section { padding: 80px 60px; text-align: center; }
+    .providers-section h2 { font-size: 32px; font-weight: 700; margin-bottom: 12px; }
+    .providers-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; max-width: 900px; margin: 0 auto; }
+    .provider-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius-card); padding: 32px 20px; text-align: center; transition: all var(--transition); }
+    .provider-card:hover { border-color: var(--accent-gold); transform: translateY(-4px); }
+    .provider-icon { font-size: 40px; margin-bottom: 12px; }
+    .provider-name { font-size: 14px; font-weight: 600; color: var(--text-secondary); }
+    .footer { padding: 32px 60px; border-top: 1px solid var(--border); text-align: center; color: var(--text-muted); font-size: 13px; }
+    .footer strong { color: var(--accent-gold); }
+    .ticker-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); display: inline-block; margin-right: 6px; animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+  </style>
+</head>
+<body>
+  <nav class="landing-nav">
+    <div class="logo">⚡ FortisPH</div>
+    <div class="nav-links">
+      <a href="/auth/login.html" class="btn btn-ghost btn-sm">Login</a>
+      <a href="/auth/register.html" class="btn btn-primary btn-sm">Register</a>
+    </div>
+  </nav>
+  <div class="stats-bar">
+    <span class="ticker-dot"></span>
+    <span class="label">Total Platform Earnings Today:</span>
+    <span class="value" id="platform-earnings">₱0</span>
+  </div>
+  <section class="hero">
+    <h1>Invest. Trade. Earn ┄<br/>Every Second.</h1>
+    <p>FortisPH is your gateway to real-time investment growth. Deposit funds, earn passive interest every second, and trade the movements of top online game provider markets.</p>
+    <div class="hero-btns">
+      <a href="/auth/register.html" class="btn btn-primary btn-lg">🚀Start Earning Now</a>
+      <a href="#how-it-works" class="btn btn-ghost btn-lg">Learn More</a>
+    </div>
+  </section>
+  <section class="how-it-works" id="how-it-works">
+    <h2>How It Works</oh2>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><h3>Deposit Funds</h3><p>Send your deposit via GCash, Maya, or Online Banking. Admin approves within minutes and your balance is credited instantly.</p></div>
+      <div class="step"><div class="step-num">2</div><h3>Earn Interest Every Second</h3><p>Your balance grows automatically — 24/7, every single second.</p></div>
+      <div class="step"><div class="step-num">3</div><h3>Trade Game Provider Markets</h3><p>Place UP or DOWN trades on JiLi, Evolution, Pragmatic Play, and SA Gaming. Win 1.8x your stake in seconds.</p></div>
+    </div>
+  </section>
+  <section class="providers-section">
+    <h2>Game Provider Markets</h2>
+    <p>Trade real-time chart movements of the Philippines' top game providers.</p>
+    <div class="providers-grid">
+      <div class="provider-card"><div class="provider-icon">🎬</div><div class="provider-name">JiLi</div></div>
+      <div class="provider-card"><div class="provider-icon">🎮</div><div class="provider-name">Evolution Gaming</div></div>
+      <div class="provider-card"><div class="provider-icon">🃏</div><div class="provider-name">Pragmatic Play</div></div>
+      <div class="provider-card"><div class="provider-icon">🎴</div><div class="provider-name">SA Gaming</div></div>
+    </div>
+  </section>
+  <footer class="footer"><p><strong>FortisPH</strong> — Philippine Investment &amp; Trading Platform</p></footer>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/interest.js"></script>
+  <script>
+    const start = 4200000 + Math.floor(Math.random() * 800000);
+    startSimpleTicker('platform-earnings', start, 1250);
+  </script>
+</body>
+</html>
