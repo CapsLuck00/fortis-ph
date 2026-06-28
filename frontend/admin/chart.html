@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chart Control — FortisPH Admin</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    .preview-box { background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; font-size: 13px; }
+    .preview-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-secondary); }
+    .preview-row strong { color: var(--text-primary); }
+    .autopilot-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: var(--accent-green); margin-bottom: 16px; }
+    .autopilot-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/chart.html" class="active"><span class="nav-icon">📈</span> Chart Control</a>
+        <a href="/admin/users.html"><span class="nav-icon">👥</span> Users</a>
+        <a href="/admin/transactions.html"><span class="nav-icon">💳</span> Transactions</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">Chart Control Panel</div>
+        <div class="topbar-right">
+          <span style="font-size:13px; color:var(--text-muted);">Current Price:</span>
+          <span id="current-price" class="price-tag" style="margin-left:6px; font-size:18px;">—</span>
+        </div>
+      </header>
+
+      <div class="page-body">
+        <div class="provider-tabs" id="provider-tabs">
+          <button class="provider-tab active" data-slug="jili" data-id="">JiLi</button>
+          <button class="provider-tab" data-slug="evolution" data-id="">Evolution</button>
+          <button class="provider-tab" data-slug="pragmatic" data-id="">Pragmatic</button>
+          <button class="provider-tab" data-slug="sagaming" data-id="">SA Gaming</button>
+        </div>
+
+        <div class="grid-2">
+          <!-- Left: Chart -->
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <div class="autopilot-badge">
+                <div class="autopilot-dot"></div>
+                Auto-Pilot Active — random candles when queue is empty
+              </div>
+              <div id="chart-container"></div>
+            </div>
+          </div>
+
+          <!-- Right: Controls -->
+          <div>
+            <!-- Push Candle Form -->
+            <div class="card" style="margin-bottom: 16px;">
+              <h3 class="section-title">Push Candle</h3>
+
+              <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:8px;">Direction</label>
+              <div class="direction-selector">
+                <button class="dir-btn up" data-dir="up" onclick="selectDir(this)">📈 UP</button>
+                <button class="dir-btn down" data-dir="down" onclick="selectDir(this)">📉 DOWN</button>
+                <button class="dir-btn flat" data-dir="flat" onclick="selectDir(this)">➡️ FLAT</button>
+              </div>
+
+              <div id="intensity-section" style="display:none;">
+                <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:8px;">Intensity</label>
+                <div class="intensity-options">
+                  <button class="intensity-btn active" data-intensity="mild" onclick="selectIntensity(this)">Mild<br/><span style="font-size:11px;">0.3–0.8%</span></button>
+                  <button class="intensity-btn" data-intensity="strong" onclick="selectIntensity(this)">Strong<br/><span style="font-size:11px;">1–2%</span></button>
+                  <button class="intensity-btn" data-intensity="custom" onclick="selectIntensity(this)">Custom<br/><span style="font-size:11px;">Manual OHLC</span></button>
+                </div>
+              </div>
+
+              <!-- Custom OHLC -->
+              <div id="custom-ohlc" style="display:none;">
+                <div class="grid-2">
+                  <div class="form-group"><label>Open</label><input type="number" id="c-open" class="form-control" step="0.01" /></div>
+                  <div class="form-group"><label>Close</label><input type="number" id="c-close" class="form-control" step="0.01" /></div>
+                  <div class="form-group"><label>High</label><input type="number" id="c-high" class="form-control" step="0.01" /></div>
+                  <div class="form-group"><label>Low</label><input type="number" id="c-low" class="form-control" step="0.01" /></div>
+                </div>
+              </div>
+
+              <!-- Preview -->
+              <div class="preview-box" id="candle-preview" style="display:none;">
+                <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px; font-weight:600;">CANDLE PREVIEW</div>
+                <div class="preview-row"><span>Open</span><strong id="prev-open">—</strong></div>
+                <div class="preview-row"><span>Close</span><strong id="prev-close">—</strong></div>
+                <div class="preview-row"><span>High</span><strong id="prev-high">—</strong></div>
+                <div class="preview-row"><span>Low</span><strong id="prev-low">—</strong></div>
+                <div class="preview-row"><span>Change</span><strong id="prev-change">—</strong></div>
+              </div>
+
+              <button class="btn btn-primary btn-full" id="push-btn" onclick="pushCandle()" style="margin-top: 8px;">
+                📤 Push to Queue
+              </button>
+            </div>
+
+            <!-- Queue -->
+            <div class="card">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
+                <h3 class="section-title" style="margin:0;">Queued Candles</h3>
+                <button class="btn btn-ghost btn-sm" onclick="loadQueue()">🔄</button>
+              </div>
+              <div id="queue-list">
+                <div style="text-align:center; color:var(--text-muted); padding:20px; font-size:14px;">No candles queued</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/chart.js"></script>
+  <script>
+    if (!redirectIfNotAdmin()) throw new Error('Not admin');
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    let currentSlug = 'jili';
+    let currentProviderId = null;
+    let currentPrice = 100;
+    let selectedDir = null;
+    let selectedIntensity = 'mild';
+
+    // Load providers to get IDs
+    apiFetch('/api/providers').then(res => {
+      if (!res || !res.ok) return;
+      const providers = res.data.providers || [];
+      document.querySelectorAll('.provider-tab').forEach(tab => {
+        const p = providers.find(p => p.slug === tab.dataset.slug);
+        if (p) {
+          tab.dataset.id = p.id;
+          if (tab.dataset.slug === currentSlug) {
+            currentProviderId = p.id;
+            currentPrice = parseFloat(p.current_price);
+            document.getElementById('current-price').textContent = currentPrice.toFixed(2);
+          }
+        }
+      });
+    });
+
+    // Provider tabs
+    document.querySelectorAll('.provider-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        currentSlug = btn.dataset.slug;
+        currentProviderId = btn.dataset.id;
+
+        apiFetch(`/api/chart/${currentSlug}/candles`).then(res => {
+          if (res && res.ok) {
+            const { candles, provider } = res.data;
+            currentPrice = parseFloat(provider.current_price);
+            document.getElementById('current-price').textContent = currentPrice.toFixed(2);
+            initChart('chart-container', currentSlug, candles);
+          }
+        });
+      });
+    });
+
+    function selectDir(btn) {
+      document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedDir = btn.dataset.dir;
+
+      const intensitySection = document.getElementById('intensity-section');
+      intensitySection.style.display = selectedDir !== 'flat' ? 'block' : 'none';
+
+      updatePreview();
+    }
+
+    function selectIntensity(btn) {
+      document.querySelectorAll('.intensity-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      selectedIntensity = btn.dataset.intensity;
+
+      document.getElementById('custom-ohlc').style.display = selectedIntensity === 'custom' ? 'block' : 'none';
+      updatePreview();
+    }
+
+    function calcOHLC() {
+      if (!selectedDir) return null;
+      const open = currentPrice;
+      let close, high, low;
+
+      if (selectedIntensity === 'custom') {
+        return {
+          open: parseFloat(document.getElementById('c-open').value) || open,
+          close: parseFloat(document.getElementById('c-close').value) || open,
+          high: parseFloat(document.getElementById('c-high').value) || open,
+          low: parseFloat(document.getElementById('c-low').value) || open
+        };
+      }
+
+      let minPct, maxPct;
+      if (selectedIntensity === 'mild') { minPct = 0.003; maxPct = 0.008; }
+      else { minPct = 0.01; maxPct = 0.02; }
+
+      const pct = minPct + Math.random() * (maxPct - minPct);
+
+      if (selectedDir === 'up') close = open * (1 + pct);
+      else if (selectedDir === 'down') close = open * (1 - pct);
+      else close = open * (1 + (Math.random() * 0.002 - 0.001));
+
+      high = Math.max(open, close) * (1 + Math.random() * 0.002);
+      low = Math.min(open, close) * (1 - Math.random() * 0.002);
+
+      return { open, close, high, low };
+    }
+
+    function updatePreview() {
+      const prev = document.getElementById('candle-preview');
+      if (!selectedDir) { prev.style.display = 'none'; return; }
+
+      const ohlc = calcOHLC();
+      if (!ohlc) { prev.style.display = 'none'; return; }
+
+      const change = ((ohlc.close - ohlc.open) / ohlc.open * 100).toFixed(3);
+      const isUp = ohlc.close >= ohlc.open;
+
+      prev.style.display = 'block';
+      document.getElementById('prev-open').textContent = ohlc.open.toFixed(4);
+      document.getElementById('prev-close').textContent = ohlc.close.toFixed(4);
+      document.getElementById('prev-high').textContent = ohlc.high.toFixed(4);
+      document.getElementById('prev-low').textContent = ohlc.low.toFixed(4);
+      document.getElementById('prev-change').innerHTML = `<span style="color:${isUp ? 'var(--accent-green)' : 'var(--accent-red)'}">${isUp ? '+' : ''}${change}%</span>`;
+    }
+
+    async function pushCandle() {
+      if (!selectedDir) { showToast('Select Direction', 'Choose UP, DOWN, or FLAT first', 'error'); return; }
+      if (!currentProviderId) { showToast('Error', 'Provider not loaded', 'error'); return; }
+
+      const ohlc = calcOHLC();
+      if (!ohlc) { showToast('Error', 'Could not calculate OHLC', 'error'); return; }
+
+      const btn = document.getElementById('push-btn');
+      btn.disabled = true;
+      btn.textContent = 'Pushing...';
+
+      const res = await apiFetch('/api/admin/chart/push', 'POST', {
+        provider_id: currentProviderId,
+        direction: selectedDir,
+        open: ohlc.open,
+        close: ohlc.close,
+        high: ohlc.high,
+        low: ohlc.low
+      });
+
+      btn.disabled = false;
+      btn.textContent = '📤 Push to Queue';
+
+      if (res && res.ok) {
+        showToast('Queued!', `${selectedDir.toUpperCase()} candle added to queue`, 'success');
+        loadQueue();
+      } else {
+        showToast('Error', res?.data?.error || 'Failed to push', 'error');
+      }
+    }
+
+    async function loadQueue() {
+      const res = await apiFetch('/api/admin/chart/queue');
+      const container = document.getElementById('queue-list');
+      if (!res || !res.ok) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">Failed to load</div>'; return; }
+
+      const queue = res.data.queue || [];
+      if (!queue.length) {
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:14px;">No candles queued</div>';
+        return;
+      }
+
+      container.innerHTML = queue.map(q => `
+        <div class="queue-item">
+          <div>
+            <div style="font-weight:600; font-size:13px;">${q.game_providers?.name || '—'}</div>
+            <div class="queue-dir-${q.direction}" style="font-size:12px;">${q.direction.toUpperCase()} · ${parseFloat(q.next_close).toFixed(4)}</div>
+          </div>
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:11px; color:var(--text-muted);">${formatDate(q.created_at)}</span>
+            <button class="btn btn-danger btn-sm" onclick="cancelQueued('${q.id}')">✕</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function cancelQueued(id) {
+      const res = await apiFetch(`/api/admin/chart/queue/${id}`, 'DELETE');
+      if (res && res.ok) { showToast('Cancelled', 'Queued candle removed', 'info'); loadQueue(); }
+    }
+
+    // Init
+    apiFetch(`/api/chart/${currentSlug}/candles`).then(res => {
+      if (res && res.ok) initChart('chart-container', currentSlug, res.data.candles || []);
+    });
+    loadQueue();
+    setInterval(loadQueue, 10000);
+  </script>
+</body>
+</html>
