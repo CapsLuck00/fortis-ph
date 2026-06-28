@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transactions — FortisPH Admin</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/chart.html"><span class="nav-icon">📈</span> Chart Control</a>
+        <a href="/admin/users.html"><span class="nav-icon">👥</span> Users</a>
+        <a href="/admin/transactions.html" class="active"><span class="nav-icon">💳</span> Transactions</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">Transaction Management</div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm" onclick="loadTransactions()">🔄 Refresh</button>
+        </div>
+      </header>
+
+      <div class="page-body">
+        <!-- Type Tabs -->
+        <div class="tabs">
+          <button class="tab-btn active" data-type="deposit">Deposits</button>
+          <button class="tab-btn" data-type="withdrawal">Withdrawals</button>
+        </div>
+
+        <!-- Status Filter -->
+        <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+          <button class="btn btn-ghost btn-sm filter-btn active" data-status="">All</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-status="pending">Pending</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-status="approved">Approved</button>
+          <button class="btn btn-ghost btn-sm filter-btn" data-status="rejected">Rejected</button>
+        </div>
+
+        <!-- Transactions Table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>User</th>
+                  <th>Amount</th>
+                  <th>Details / Reference</th>
+                  <th>Status</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="tx-tbody">
+                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Reject Modal -->
+  <div class="modal-overlay hidden" id="reject-modal">
+    <div class="modal">
+      <div class="modal-header">
+        <div class="modal-title">Reject Transaction</div>
+        <button class="modal-close" onclick="closeRejectModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-warning" style="margin-bottom:16px;">This will mark the transaction as rejected. Funds are NOT automatically refunded for withdrawals — handle manually if needed.</div>
+        <div class="form-group">
+          <label>Reason for Rejection</label>
+          <input type="text" id="reject-reason" class="form-control" placeholder="e.g. Invalid reference, insufficient proof" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeRejectModal()">Cancel</button>
+        <button class="btn btn-danger" onclick="confirmReject()">Confirm Reject</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/assets/js/api.js"></script>
+  <script>
+    if (!redirectIfNotAdmin()) throw new Error('Not admin');
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    let currentType = 'deposit';
+    let currentStatus = '';
+    let rejectingId = null;
+
+    // Type tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentType = btn.dataset.type;
+        loadTransactions();
+      });
+    });
+
+    // Status filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentStatus = btn.dataset.status;
+        loadTransactions();
+      });
+    });
+
+    async function loadTransactions() {
+      let url = `/api/admin/transactions?type=${currentType}`;
+      if (currentStatus) url += `&status=${currentStatus}`;
+
+      const res = await apiFetch(url);
+      const tbody = document.getElementById('tx-tbody');
+
+      if (!res || !res.ok) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Failed to load</td></tr>';
+        return;
+      }
+
+      const txs = res.data.transactions || [];
+      if (!txs.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">No transactions found</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = txs.map(t => `
+        <tr>
+          <td style="font-size:12px; white-space:nowrap;">${formatDate(t.created_at)}</td>
+          <td>
+            <div class="primary" style="font-weight:600;">${t.users?.username || '—'}</div>
+            <div style="font-size:11px; color:var(--text-muted);">${t.users?.email || ''}</div>
+          </td>
+          <td class="primary" style="font-size:16px; font-weight:700;">${formatPHP(t.amount)}</td>
+          <td style="font-size:12px; color:var(--text-muted); max-width:200px; word-break:break-all;">
+            ${t.reference_code ? `<div><strong style="color:var(--text-secondary)">Ref:</strong> ${t.reference_code}</div>` : ''}
+            ${t.notes ? `<div style="margin-top:2px;">${t.notes.substring(0, 80)}${t.notes.length > 80 ? '...' : ''}</div>` : ''}
+          </td>
+          <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
+          <td>
+            ${t.status === 'pending' ? `
+              <div style="display:flex; gap:6px;">
+                <button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓ Approve</button>
+                <button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗ Reject</button>
+              </div>
+            ` : '<span style="color:var(--text-muted);font-size:13px;">Processed</span>'}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function approveTx(id) {
+      const res = await apiFetch(`/api/admin/transactions/${id}/approve`, 'POST');
+      if (res && res.ok) {
+        showToast('✅ Approved', 'Transaction approved. Balance credited.', 'success');
+        loadTransactions();
+      } else {
+        showToast('Error', res?.data?.error || 'Failed to approve', 'error');
+      }
+    }
+
+    function openRejectModal(id) {
+      rejectingId = id;
+      document.getElementById('reject-reason').value = '';
+      document.getElementById('reject-modal').classList.remove('hidden');
+    }
+
+    function closeRejectModal() {
+      rejectingId = null;
+      document.getElementById('reject-modal').classList.add('hidden');
+    }
+
+    async function confirmReject() {
+      if (!rejectingId) return;
+      const reason = document.getElementById('reject-reason').value.trim();
+
+      const res = await apiFetch(`/api/admin/transactions/${rejectingId}/reject`, 'POST', { reason });
+      if (res && res.ok) {
+        showToast('Rejected', 'Transaction marked as rejected', 'info');
+        closeRejectModal();
+        loadTransactions();
+      } else {
+        showToast('Error', res?.data?.error || 'Failed to reject', 'error');
+      }
+    }
+
+    loadTransactions();
+    setInterval(loadTransactions, 30000);
+  </script>
+</body>
+</html>
