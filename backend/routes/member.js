@@ -1,8 +1,167 @@
-const express=require('express');const router=express.Router();const supabase=require('../db/supabase');const{authMiddleware}=require('../middleware/auth');router.use(authMiddleware);
-router.get('/dashboard',async(req,res)=>{try{const userId=req.user.id;const{data:user}=await supabase.from('users').select('balance,interest_rate_per_second,total_invested').eq('id',userId).single();const{data:recentTx}=await supabase.from('transactions').select('*').eq('user_id',userId).order('created_at',{ascending:false}).limit(10);const{data:openTrades}=await supabase.from('trades').select('*,game_providers(name,slug)').eq('user_id',userId).eq('result','pending').order('trade_open_at',{ascending:false});return res.json({balance:user?.balance||0,interest_rate_per_second:user?.interest_rate_per_second||0.000035,total_invested:user?.total_invested||0,recent_transactions:recentTx||[],open_trades:openTrades||[]});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/deposit',async(req,res)=>{try{const{amount,payment_method,account_name,reference_code}=req.body;if(!amount||amount<=0)return res.status(400).json({error:'Valid amount required'});if(!reference_code)return res.status(400).json({error:'Reference code required'});const internalRef=`DEP-${Date.now()}`;const{data:tx,error}=await supabase.from('transactions').insert({user_id:req.user.id,type:'deposit',amount:parseFloat(amount),status:"pending',reference_code:reference_code||internalRef,notes:`Payment: ${payment_method||'N/A'} | Account: ${account_name||'N/A'}`}).select().single();if(error)return res.status(500).json({error:'Failed to submit'});return res.status(201).json({message:'Deposit request submitted',transaction:tx,reference:tx.reference_code});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/withdraw',async(req,res)=>{try{const{amount,payment_method,account_number,account_name}=req.body;if(!amount||amount<=0)return res.status(400).json({error:'Valid amount required'});const{data:user}=await supabase.from('users').select('balance').eq('id',req.user.id).single();if(!user||parseFloat(user.balance)<parseFloat(amount))return res.status(400).json({error:'Insufficient balance'});const reference=`WD-${Date.now()}`;const{data:tx,error}=await supabase.from('transactions').insert({user_id:req.user.id,type:'withdrawal',amount:parseFloat(amount),status:"pending',reference_code:reference,notes:`To: ${payment_method||'N/A'} | Account: ${account_number||'N/A'} | Name: ${account_name||'N/A'}`}).select().single();if(error)return res.status(500).json({error:'Failed to submit'});return res.status(201).json({message:'Withdrawal request submitted',transaction:tx});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.get('/transactions',async(req,res)=>{try{const page=parseInt(req.query.page)||1;const limit=parseInt(req.query.limit)||20;const offset=(page-1)*limit;const{data:transactions,error,count}=await supabase.from('transactions').select('*',{count:'exact'}).eq('user_id',req.user.id).order('created_at',{ascending:false}).range(offset,offset+limit-1);if(error)return res.status(500).json({error:'Failed to fetch'});return res.json({transactions:transactions||[],pagination:{page,limit,total:count,pages:Math.ceil(count/limit)}});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/trade',async(req,res)=>{try{const{provider_id,direction,stake,duration_seconds}=req.body;if(!provider_id||!direction||!stake)return res.status(400).json({error:'provider_id,direction,stake required'});if(!['up','down'].includes(direction))return res.status(400).json({error:'Direction must be up or down'});const stakeAmount=parseFloat(stake);if(stakeAmount<=0)return res.status(400).json({error:'Stake must be >0'});const{data:user}=await supabase.from('users').select('balance').eq('id',req.user.id).single();if(!user||parseFloat(user.balance)<stakeAmount)return res.status(400).json({error:'Insufficient balance'});const duration=parseInt(duration_seconds)||30;const closeAt=new Date(Date.now()+duration*1000).toISOString();await supabase.from('users').update({balance:parseFloat(user.balance)-stakeAmount}).eq('id',req.user.id);const{data:trade,error}=await supabase.from('trades').insert({user_id:req.user.id,provider_id,direction,stake:stakeAmount,payout_multiplier:1.8,result:'pending',payout_amount:0,trade_close_at:closeAt,duration_seconds:duration}).select().single();if(error){await supabase.from('users').update({balance:parseFloat(user.balance)}).eq('id',req.user.id);return res.status(500).json({error:'Failed to place trade'});}return res.status(201).json({message:'Trade placed',trade});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.get('/trades',async(req,res)=>{try{const page=parseInt(req.query.page)||1;const limit=parseInt(req.query.limit)||20;const offset=(page-1)*limit;const{data:trades,error,count}=await supabase.from('trades').select('*,game_providers(name,slug)',{count:'exact'}).eq('user_id',req.user.id).order('trade_open_at',{ascending:false}).range(offset,offset+limit-1);if(error)return res.status(500).json({error:'Failed to fetch'});return res.json({trades:trades||[],pagination:{page,limit,total:count,pages:Math.ceil(count/limit)}});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-module.exports=router;
+const express = require('express');
+const router = express.Router();
+const supabase = require('../db/supabase');
+const auth = require('../middleware/auth');
+
+// GET /api/member/dashboard
+router.get('/dashboard', auth, async (req, res) => {
+  try {
+    const { data: member } = await supabase
+      .from('members')
+      .select('balance, interest_rate_per_second')
+      .eq('id', req.user.id)
+      .single();
+
+    const { data: open_trades } = await supabase
+      .from('trades')
+      .select('*, game_providers(name, slug)')
+      .eq('member_id', req.user.id)
+      .eq('result', 'pending');
+
+    res.json({ ok: true, data: { ...member, open_trades: open_trades || [] } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/member/deposit
+router.post('/deposit', auth, async (req, res) => {
+  try {
+    const { amount, payment_method, reference_number } = req.body;
+    if (!amount || amount < 100) return res.status(400).json({ error: 'Minimum deposit is ₱100' });
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({
+        member_id: req.user.id,
+        type: 'deposit',
+        amount,
+        payment_method,
+        reference_number,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/member/withdraw
+router.post('/withdraw', auth, async (req, res) => {
+  try {
+    const { amount, payment_method, account_number, account_name } = req.body;
+    if (!amount || amount < 100) return res.status(400).json({ error: 'Minimum withdrawal is ₱100' });
+
+    const { data: member } = await supabase
+      .from('members')
+      .select('balance')
+      .eq('id', req.user.id)
+      .single();
+
+    if (!member || parseFloat(member.balance) < amount)
+      return res.status(400).json({ error: 'Insufficient balance' });
+
+    await supabase.from('members').update({ balance: parseFloat(member.balance) - amount }).eq('id', req.user.id);
+
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert({
+        member_id: req.user.id,
+        type: 'withdrawal',
+        amount,
+        payment_method,
+        account_number,
+        account_name,
+        status: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/member/trade
+router.post('/trade', auth, async (req, res) => {
+  try {
+    const { provider_id, direction, stake, duration_seconds } = req.body;
+    if (!provider_id || !direction || !stake || !duration_seconds)
+      return res.status(400).json({ error: 'Missing trade fields' });
+    if (stake < 10) return res.status(400).json({ error: 'Minimum stake is ₱10' });
+
+    const { data: member } = await supabase
+      .from('members')
+      .select('balance')
+      .eq('id', req.user.id)
+      .single();
+
+    if (!member || parseFloat(member.balance) < stake)
+      return res.status(400).json({ error: 'Insufficient balance' });
+
+    await supabase.from('members').update({ balance: parseFloat(member.balance) - stake }).eq('id', req.user.id);
+
+    const close_at = new Date(Date.now() + duration_seconds * 1000).toISOString();
+
+    const { data: trade, error } = await supabase
+      .from('trades')
+      .insert({
+        member_id: req.user.id,
+        provider_id,
+        direction,
+        stake,
+        duration_seconds,
+        trade_close_at: close_at,
+        result: 'pending'
+      })
+      .select()
+      .single();
+
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data: { trade } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/member/trades
+router.get('/trades', auth, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const { data } = await supabase
+      .from('trades')
+      .select('*, game_providers(name, slug)')
+      .eq('member_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    res.json({ ok: true, data: { trades: data || [] } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/member/transactions
+router.get('/transactions', auth, async (req, res) => {
+  try {
+    const limit = parseInt(req.query.limit) || 20;
+    const { data } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('member_id', req.user.id)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    res.json({ ok: true, data: { transactions: data || [] } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
