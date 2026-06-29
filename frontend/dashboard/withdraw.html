@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Withdraw — FortisPH</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Member Portal</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/dashboard/deposit.html"><span class="nav-icon">💰</span> Deposit</a>
+        <a href="/dashboard/withdraw.html" class="active"><span class="nav-icon">💸</span> Withdraw</a>
+        <a href="/dashboard/history.html"><span class="nav-icon">📜</span> History</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">Withdraw Funds</div>
+      </header>
+
+      <div class="page-body">
+        <div class="grid-2" style="max-width: 900px;">
+          <!-- Withdraw Form -->
+          <div class="card" id="withdraw-form-card">
+            <h3 class="section-title">Withdrawal Request</h3>
+
+            <!-- Balance Display -->
+            <div style="background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: var(--text-muted); font-size: 13px;">Available Balance</span>
+              <span id="balance-display" style="font-size: 20px; font-weight: 700; color: var(--accent-gold);">₱0.00</span>
+            </div>
+
+            <div id="form-error" class="alert alert-error" style="display:none;"></div>
+
+            <form id="withdraw-form">
+              <div class="form-group">
+                <label for="amount">Amount to Withdraw (₱)</label>
+                <input type="number" id="amount" class="form-control" placeholder="Enter amount" min="100" step="50" required />
+              </div>
+
+              <div class="form-group">
+                <label for="payment-method">Payment Method</label>
+                <select id="payment-method" class="form-control" required>
+                  <option value="">Select payout method</option>
+                  <option value="GCash">GCash</option>
+                  <option value="Maya">Maya</option>
+                  <option value="Online Banking">Online Banking</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="account-number">Account Number / Mobile Number</label>
+                <input type="text" id="account-number" class="form-control" placeholder="e.g. 0917 234 5678" required />
+              </div>
+
+              <div class="form-group">
+                <label for="account-name">Account Name</label>
+                <input type="text" id="account-name" class="form-control" placeholder="Your registered account name" required />
+              </div>
+
+              <button type="submit" class="btn btn-primary btn-full" id="withdraw-btn">
+                💸 Submit Withdrawal Request
+              </button>
+            </form>
+          </div>
+
+          <!-- Info -->
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <h4 class="section-title">Withdrawal Policy</h4>
+              <ul style="color: var(--text-secondary); font-size: 14px; line-height: 1.9; padding-left: 18px;">
+                <li>Minimum withdrawal: <strong style="color:var(--text-primary);">₱100</strong></li>
+                <li>Processing time: <strong style="color:var(--text-primary);">1–24 hours</strong></li>
+                <li>Your balance is held pending admin approval</li>
+                <li>Rejected withdrawals are refunded to balance</li>
+                <li>Ensure account details are accurate</li>
+              </ul>
+            </div>
+            <div class="alert alert-warning">
+              ⚠️ Withdrawals are reviewed and processed manually by admins. Please allow up to 24 hours.
+            </div>
+          </div>
+        </div>
+
+        <!-- Success State -->
+        <div class="card" id="success-card" style="display:none; max-width: 520px; margin: 0 auto; text-align: center; padding: 40px 24px;">
+          <div style="font-size: 56px; margin-bottom: 16px;">⏳</div>
+          <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">Withdrawal Submitted!</h3>
+          <p style="color: var(--text-muted);">Your withdrawal request is pending admin approval. Funds will be sent to your account within 24 hours.</p>
+          <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
+            <a href="/dashboard/history.html" class="btn btn-primary">View History</a>
+            <a href="/dashboard/index.html" class="btn btn-ghost">Dashboard</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/assets/js/api.js"></script>
+  <script>
+    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    // Load balance
+    apiFetch('/api/member/dashboard').then(res => {
+      if (res && res.ok) {
+        document.getElementById('balance-display').textContent = formatPHP(res.data.balance);
+      }
+    });
+
+    document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('form-error');
+      errorEl.style.display = 'none';
+
+      const amount = parseFloat(document.getElementById('amount').value);
+      const payment_method = document.getElementById('payment-method').value;
+      const account_number = document.getElementById('account-number').value.trim();
+      const account_name = document.getElementById('account-name').value.trim();
+
+      if (amount < 100) { errorEl.textContent = 'Minimum withdrawal is ₱100'; errorEl.style.display = 'flex'; return; }
+
+      const btn = document.getElementById('withdraw-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const res = await apiFetch('/api/member/withdraw', 'POST', { amount, payment_method, account_number, account_name });
+
+      if (res && res.ok) {
+        document.getElementById('withdraw-form-card').style.display = 'none';
+        document.getElementById('success-card').style.display = 'block';
+      } else {
+        errorEl.textContent = res?.data?.error || 'Submission failed. Try again.';
+        errorEl.style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = '💸 Submit Withdrawal Request';
+      }
+    });
+  </script>
+</body>
+</html>
