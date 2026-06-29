@@ -4,6 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Trade — FortisPH</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
 html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
@@ -116,7 +117,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
             <span class="section-title" id="chart-title">Loading…</span>
             <div style="display:flex;align-items:center;gap:6px"><span class="live-dot"></span><span style="font-size:11px;color:var(--muted)">Live</span><span style="font-size:13px;font-weight:700;color:var(--green)" id="current-price">—</span></div>
           </div>
-          <div class="chart-wrap"><canvas id="price-chart"></canvas></div>
+          <div class="chart-wrap" id="price-chart-wrap" style="position:relative;"></div>
         </div>
         <!-- TRADE HISTORY -->
         <div class="card">
@@ -207,18 +208,32 @@ async function selectProvider(slug,name,el){
 
 async function loadChart(slug){
   const r=await apiFetch('/api/chart/'+slug+'/candles');
-  const ctx=document.getElementById('price-chart').getContext('2d');
-  if(priceChart)priceChart.destroy();
+  const wrap=document.getElementById('price-chart-wrap');
+  wrap.innerHTML='';
+  if(priceChart&&priceChart.remove){priceChart.remove();priceChart=null;}
   let candles=[];
   if(r&&r.ok)candles=r.data.data?.candles||[];
-  if(!candles.length){for(let i=60;i>=0;i--)candles.push({close:100+(Math.random()-0.5)*10,time:new Date(Date.now()-i*3600000).toISOString()});}
-  const prices=candles.map(c=>parseFloat(c.close));
-  const grad=ctx.createLinearGradient(0,0,0,220);
-  const last=prices[prices.length-1];const first=prices[0];
-  const isUp=last>=first;
-  grad.addColorStop(0,isUp?'rgba(16,185,129,0.25)':'rgba(239,68,68,0.25)');
-  grad.addColorStop(1,'rgba(0,0,0,0)');
-  priceChart=new Chart(ctx,{type:'line',data:{labels:candles.map(c=>new Date(c.time).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})),datasets:[{data:prices,borderColor:isUp?'#10b981':'#ef4444',borderWidth:1.5,backgroundColor:grad,fill:true,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7280',font:{size:9},maxTicksLimit:8},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#6b7280',font:{size:10},callback:v=>'₱'+v.toFixed(2)},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+  const now=Math.floor(Date.now()/1000);
+  const interval=60;
+  if(!candles.length){for(let i=80;i>=0;i--){const p=100+(Math.random()-0.48)*3;const o=100+(Math.random()-0.48)*3;const hi=Math.max(o,p)+Math.random();const lo=Math.min(o,p)-Math.random();candles.push({open:o,high:hi,low:lo,close:p,time:new Date(Date.now()-i*interval*1000).toISOString()});}}
+  const chart=LightweightCharts.createChart(wrap,{
+    width:wrap.clientWidth||580,height:wrap.clientHeight||220,
+    layout:{background:{color:'#111827'},textColor:'#9ca3af'},
+    grid:{vertLines:{color:'rgba(255,255,255,0.04)'},horzLines:{color:'rgba(255,255,255,0.04)'}},
+    rightPriceScale:{borderColor:'#1f2937'},
+    timeScale:{borderColor:'#1f2937',timeVisible:false,fixRightEdge:true},
+    crosshair:{mode:LightweightCharts.CrosshairMode.Normal},
+    handleScroll:false,handleScale:false,
+  });
+  priceChart=chart;
+  const series=chart.addCandlestickSeries({upColor:'#10b981',downColor:'#ef4444',borderUpColor:'#10b981',borderDownColor:'#ef4444',wickUpColor:'#10b981',wickDownColor:'#ef4444'});
+  const data=candles.map((cd,i)=>({time:now-(candles.length-1-i)*interval,open:parseFloat(cd.open||100),high:parseFloat(cd.high||Math.max(cd.open,cd.close)+0.5),low:parseFloat(cd.low||Math.min(cd.open,cd.close)-0.5),close:parseFloat(cd.close||100)}));
+  series.setData(data);
+  chart.timeScale().fitContent();
+  const last=data[data.length-1]?.close||100;
+  document.getElementById('current-price').textContent='₱'+last.toLocaleString('en-PH',{minimumFractionDigits:2});
+  const ro=new ResizeObserver(()=>{chart.applyOptions({width:wrap.clientWidth});});
+  ro.observe(wrap);
 }
 
 function setDir(d){

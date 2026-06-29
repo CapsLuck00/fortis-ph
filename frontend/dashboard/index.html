@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — FortisPH</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -255,22 +256,22 @@
     <div class="nav-section">
       <div class="nav-label">Main</div>
       <a href="/dashboard/index.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
-      <a href="#" class="nav-item"><span class="nav-icon">👛</span>Wallet</a>
-      <a href="#" class="nav-item"><span class="nav-icon">🔄</span>Exchange</a>
-      <a href="#" class="nav-item"><span class="nav-icon">📈</span>Markets</a>
+      <a href="/dashboard/wallet.html" class="nav-item"><span class="nav-icon">👛</span>Wallet</a>
+      <a href="/dashboard/exchange.html" class="nav-item"><span class="nav-icon">🔄</span>Exchange</a>
+      <a href="/dashboard/markets.html" class="nav-item"><span class="nav-icon">📈</span>Markets</a>
     </div>
     <div class="nav-section">
       <div class="nav-label">Trade</div>
       <a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">⚡</span>Trading</a>
-      <a href="#" class="nav-item"><span class="nav-icon">👥</span>Copy Trading<span class="nav-badge new">NEW</span></a>
-      <a href="#" class="nav-item"><span class="nav-icon">📉</span>Analytics</a>
+      <a href="/dashboard/copy-trading.html" class="nav-item"><span class="nav-icon">👥</span>Copy Trading<span class="nav-badge new">NEW</span></a>
+      <a href="/dashboard/analytics.html" class="nav-item"><span class="nav-icon">📉</span>Analytics</a>
     </div>
     <div class="nav-section">
       <div class="nav-label">Account</div>
       <a href="/dashboard/deposit.html" class="nav-item"><span class="nav-icon">💳</span>Deposit</a>
       <a href="/dashboard/withdraw.html" class="nav-item"><span class="nav-icon">🏦</span>Withdraw</a>
-      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span>Settings</a>
-      <a href="#" class="nav-item"><span class="nav-icon">🎓</span>Education</a>
+      <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">⚙️</span>Settings</a>
+      <a href="/dashboard/education.html" class="nav-item"><span class="nav-icon">🎓</span>Education</a>
     </div>
     <div class="sidebar-footer">
       <div class="sidebar-user-card">
@@ -346,9 +347,7 @@
         <div class="chart-tabs" id="provider-tabs">
           <span class="chart-tab active" data-idx="0">Loading…</span>
         </div>
-        <div class="chart-wrap">
-          <canvas id="revenue-chart"></canvas>
-        </div>
+        <div class="chart-wrap" id="revenue-chart-wrap" style="position:relative;height:240px;"></div>
       </div>
 
     </div>
@@ -661,71 +660,63 @@ async function loadChart(slug) {
 }
 
 function renderChart(candles) {
-  const ctx = document.getElementById('revenue-chart').getContext('2d');
-  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+  const wrap = document.getElementById('revenue-chart-wrap');
+  wrap.innerHTML = '';
 
-  if (!candles.length) {
-    // Generate synthetic candles for demo
-    candles = generateSyntheticCandles(60, 100);
+  if (!candles || !candles.length) {
+    candles = generateSyntheticCandles(80, 100);
   }
 
-  const labels = candles.map((_, i) => i);
-  const prices = candles.map(c => parseFloat(c.close || c.open || 100));
-  const lastPrice = prices[prices.length - 1] || 100;
+  // Destroy previous lightweight chart
+  if (chartInstance && chartInstance._private) {
+    chartInstance.remove();
+    chartInstance = null;
+  }
 
-  // Build gradient
-  const grad = ctx.createLinearGradient(0, 0, 0, 220);
-  grad.addColorStop(0, 'rgba(16,185,129,0.25)');
-  grad.addColorStop(1, 'rgba(16,185,129,0.01)');
+  const chart = LightweightCharts.createChart(wrap, {
+    width: wrap.clientWidth || wrap.offsetWidth || 600,
+    height: 240,
+    layout: { background: { color: '#111827' }, textColor: '#9ca3af' },
+    grid: { vertLines: { color: 'rgba(255,255,255,0.04)' }, horzLines: { color: 'rgba(255,255,255,0.04)' } },
+    rightPriceScale: { borderColor: '#1f2937' },
+    timeScale: { borderColor: '#1f2937', timeVisible: false, fixRightEdge: true },
+    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+    handleScroll: false,
+    handleScale: false,
+  });
+  chartInstance = chart;
 
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels,
-      datasets: [{
-        data: prices,
-        borderColor: '#10b981',
-        borderWidth: 2,
-        backgroundColor: grad,
-        fill: true,
-        tension: 0.3,
-        pointRadius: 0,
-        pointHoverRadius: 4,
-        pointHoverBackgroundColor: '#10b981',
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: {
-        mode: 'index', intersect: false,
-        backgroundColor: '#1f2937', titleColor: '#9ca3af', bodyColor: '#f9fafb',
-        borderColor: '#374151', borderWidth: 1,
-        callbacks: { label: ctx => `₱${ctx.raw.toLocaleString('en-PH',{minimumFractionDigits:2})}` }
-      }},
-      scales: {
-        x: { display: false },
-        y: {
-          display: true,
-          position: 'right',
-          grid: { color: 'rgba(255,255,255,0.04)' },
-          border: { display: false },
-          ticks: { color: '#4b5563', font: { size: 10 }, callback: v => `₱${v.toLocaleString('en-PH',{minimumFractionDigits:0})}` }
-        }
-      },
-      interaction: { mode: 'index', intersect: false },
-      animation: { duration: 400 }
-    }
+  const series = chart.addCandlestickSeries({
+    upColor: '#10b981',
+    downColor: '#ef4444',
+    borderUpColor: '#10b981',
+    borderDownColor: '#ef4444',
+    wickUpColor: '#10b981',
+    wickDownColor: '#ef4444',
   });
 
-  // Show last price label
-  const wrap = document.querySelector('.chart-wrap');
-  let existingLabel = wrap.querySelector('.chart-price-label');
-  if (!existingLabel) {
-    existingLabel = document.createElement('div');
-    existingLabel.className = 'chart-price-label';
-    wrap.appendChild(existingLabel);
-  }
-  existingLabel.textContent = `₱${lastPrice.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+  const now = Math.floor(Date.now() / 1000);
+  const interval = 60; // 1 min per candle
+  const formatted = candles.map((c, i) => ({
+    time: now - (candles.length - 1 - i) * interval,
+    open: parseFloat(c.open || 100),
+    high: parseFloat(c.high || Math.max(c.open, c.close) + 0.5),
+    low: parseFloat(c.low || Math.min(c.open, c.close) - 0.5),
+    close: parseFloat(c.close || 100),
+  }));
+
+  series.setData(formatted);
+  chart.timeScale().fitContent();
+
+  // Price label
+  const lastPrice = formatted[formatted.length - 1]?.close || 100;
+  let lbl = wrap.querySelector('.chart-price-label');
+  if (!lbl) { lbl = document.createElement('div'); lbl.className = 'chart-price-label'; lbl.style.cssText='position:absolute;top:6px;right:8px;background:#10b981;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px;z-index:10;'; wrap.style.position='relative'; wrap.appendChild(lbl); }
+  lbl.textContent = `₱${lastPrice.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+
+  // Responsive resize
+  const ro = new ResizeObserver(() => { chart.applyOptions({ width: wrap.clientWidth }); });
+  ro.observe(wrap);
 }
 
 function generateSyntheticCandles(count, startPrice) {
