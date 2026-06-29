@@ -1,4 +1,39 @@
-const express=require('express');const router=express.Router();const supabase=require('../db/supabase');
-router.get('/providers',async(req,res)=>{try{const{data:providers,error}=await supabase.from('game_providers').select('*').eq('is_active',true).order('name');if(error)return res.status(500).json({error:'Failed to fetch providers'});return res.json({providers:providers||[]});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.get('/:providerSlug/candles',async(req,res)=>{try{const{providerSlug}=req.params;const{data:provider}=await supabase.from('game_providers').select('id,name,slug,current_price').eq('slug',providerSlug).single();if(!provider)return res.status(404).json({error:'Provider not found'});const{data:candles,error}=await supabase.from('chart_candles').select('*').eq('provider_id',provider.id).order('candle_timestamp',{ascending:false}).limit(50);if(error)return res.status(500).json({error:'Failed to fetch candles'});return res.json({provider,candles:(candles||[]).reverse()});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-module.exports=router;
+const express = require('express');
+const router = express.Router();
+const supabase = require('../db/supabase');
+
+// GET /api/providers
+router.get('/', async (req, res) => {
+  try {
+    const { data } = await supabase.from('game_providers').select('*').eq('is_active', true);
+    res.json({ ok: true, data: { providers: data || [] } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/chart/:slug/candles
+router.get('/:slug/candles', async (req, res) => {
+  try {
+    const { data: provider } = await supabase
+      .from('game_providers')
+      .select('id, name, slug, current_price')
+      .eq('slug', req.params.slug)
+      .single();
+
+    if (!provider) return res.status(404).json({ error: 'Provider not found' });
+
+    const { data: candles } = await supabase
+      .from('price_candles')
+      .select('*')
+      .eq('provider_id', provider.id)
+      .order('time', { ascending: false })
+      .limit(100);
+
+    res.json({ ok: true, data: { provider, candles: (candles || []).reverse() } });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+module.exports = router;
