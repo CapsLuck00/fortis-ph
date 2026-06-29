@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dashboard — FortisPH</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <style>
+    .balance-card { background: linear-gradient(135deg, #111827 0%, #1a2236 100%); border: 1px solid var(--accent-gold); border-radius: var(--radius-card); padding: 28px; margin-bottom: 20px; }
+    .rate-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; padding: 5px 14px; font-size: 13px; color: var(--accent-green); margin-top: 12px; }
+    .rate-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); animation: pulse 1.5s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .chart-section { margin-bottom: 20px; }
+    .open-trades-section { margin-top: 20px; }
+    .no-trades { text-align: center; padding: 24px; color: var(--text-muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Member Portal</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/index.html" class="active"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/dashboard/deposit.html"><span class="nav-icon">💰</span> Deposit</a>
+        <a href="/dashboard/withdraw.html"><span class="nav-icon">💸</span> Withdraw</a>
+        <a href="/dashboard/history.html"><span class="nav-icon">📜</span> History</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">Dashboard</div>
+        <div class="topbar-right">
+          <span style="font-size:13px; color: var(--text-muted);">Balance:</span>
+          <span id="topbar-balance" style="font-weight:700; color: var(--accent-gold);">₱0.00</span>
+        </div>
+      </header>
+
+      <div class="page-body">
+        <!-- Balance Card -->
+        <div class="balance-card">
+          <div class="balance-label">Available Balance</div>
+          <div class="balance-display" id="balance-display">₱0.00</div>
+          <div class="rate-badge">
+            <div class="dot"></div>
+            Earning <span id="rate-display">0.0035%</span> per second
+            &nbsp;·&nbsp; Est. <span id="daily-rate">+₱0.00</span>/day
+          </div>
+        </div>
+
+        <!-- Provider Tabs + Chart -->
+        <div class="card chart-section">
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+            <h3 class="section-title" style="margin:0;">Live Chart</h3>
+            <div>
+              <span style="font-size:13px; color:var(--text-muted);">Price:</span>
+              <span id="current-price" class="price-tag" style="margin-left:6px;">—</span>
+            </div>
+          </div>
+
+          <div class="provider-tabs" id="provider-tabs">
+            <button class="provider-tab active" data-slug="jili">JiLi</button>
+            <button class="provider-tab" data-slug="evolution">Evolution</button>
+            <button class="provider-tab" data-slug="pragmatic">Pragmatic</button>
+            <button class="provider-tab" data-slug="sagaming">SA Gaming</button>
+          </div>
+
+          <div id="chart-container"></div>
+
+          <!-- Trade Form -->
+          <div class="trade-form">
+            <h4 class="section-title" style="margin-bottom:12px;">Place Trade</h4>
+            <div style="margin-bottom:12px;">
+              <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:6px;">Duration</label>
+              <div class="duration-options">
+                <button class="duration-btn active" data-sec="30">30s</button>
+                <button class="duration-btn" data-sec="60">1m</button>
+                <button class="duration-btn" data-sec="300">5m</button>
+              </div>
+            </div>
+            <div class="form-group">
+              <label for="stake-input">Stake Amount (₱)</label>
+              <input type="number" id="stake-input" class="form-control" placeholder="Enter stake amount" min="10" step="10" />
+            </div>
+            <div class="trade-buttons">
+              <button class="btn btn-success btn-full" id="btn-up">🟢 BUY UP</button>
+              <button class="btn btn-danger btn-full" id="btn-down">🔴 SELL DOWN</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Open Trades -->
+        <div class="card open-trades-section">
+          <h3 class="section-title">Open Trades</h3>
+          <div id="open-trades-list">
+            <div class="no-trades">No open trades. Place your first trade above!</div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="/assets/js/api.js"></script>
+  <script src="/assets/js/interest.js"></script>
+  <script src="/assets/js/chart.js"></script>
+  <script>
+    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
+
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    let currentProvider = 'jili';
+    let selectedDuration = 30;
+    let ticker = null;
+    let openTradesData = [];
+    let countdownIntervals = {};
+
+    // Load dashboard data
+    async function loadDashboard() {
+      const res = await apiFetch('/api/member/dashboard');
+      if (!res || !res.ok) return;
+
+      const { balance, interest_rate_per_second, open_trades } = res.data;
+      const rate = parseFloat(interest_rate_per_second) || 0.000035;
+      const bal = parseFloat(balance) || 0;
+
+      // Update topbar
+      document.getElementById('topbar-balance').textContent = formatPHP(bal);
+
+      // Update rate badge
+      document.getElementById('rate-display').textContent = (rate * 100).toFixed(4) + '%';
+      const dailyEarning = bal * rate * 86400;
+      document.getElementById('daily-rate').textContent = formatPHP(dailyEarning);
+
+      // Start interest ticker
+      if (ticker) ticker.stop();
+      ticker = startInterestTicker(bal, rate, 'balance-display');
+
+      // Sync topbar every 5s
+      setInterval(() => {
+        const rawBal = document.getElementById('balance-display').textContent.replace(/[₱,]/g,'');
+        document.getElementById('topbar-balance').textContent = '₱' + parseFloat(rawBal).toLocaleString('en-PH', {minimumFractionDigits:2,maximumFractionDigits:2});
+      }, 5000);
+
+      // Render open trades
+      openTradesData = open_trades || [];
+      renderOpenTrades();
+    }
+
+    // Load chart for current provider
+    async function loadChart(slug) {
+      const res = await apiFetch(`/api/chart/${slug}/candles`);
+      const candles = res?.data?.candles || [];
+      initChart('chart-container', slug, candles);
+    }
+
+    // Provider tabs
+    document.querySelectorAll('.provider-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
+        btn.classList.add('active');
+        currentProvider = btn.dataset.slug;
+        loadChart(currentProvider);
+      });
+    });
+
+    // Duration buttons
+    document.querySelectorAll('.duration-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedDuration = parseInt(btn.dataset.sec);
+      });
+    });
+
+    // Trade buttons
+    async function placeTrade(direction) {
+      const stake = parseFloat(document.getElementById('stake-input').value);
+      if (!stake || stake < 10) {
+        showToast('Invalid Stake', 'Minimum stake is ₱10', 'error');
+        return;
+      }
+
+      // Get provider ID
+      const provRes = await apiFetch('/api/providers');
+      const providers = provRes?.data?.providers || [];
+      const provider = providers.find(p => p.slug === currentProvider);
+      if (!provider) { showToast('Error', 'Provider not found', 'error'); return; }
+
+      const btn = direction === 'up' ? document.getElementById('btn-up') : document.getElementById('btn-down');
+      const origText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = 'Placing...';
+
+      const res = await apiFetch('/api/member/trade', 'POST', {
+        provider_id: provider.id,
+        direction,
+        stake,
+        duration_seconds: selectedDuration
+      });
+
+      btn.disabled = false;
+      btn.textContent = origText;
+
+      if (res && res.ok) {
+        showToast(`Trade Placed! ${direction === 'up' ? '🟢' : '🔴'}`, `${direction.toUpperCase()} ₱${stake} for ${selectedDuration}s`, 'success');
+        openTradesData.push(res.data.trade);
+        renderOpenTrades();
+        loadDashboard();
+      } else {
+        showToast('Trade Failed', res?.data?.error || 'Could not place trade', 'error');
+      }
+    }
+
+    document.getElementById('btn-up').addEventListener('click', () => placeTrade('up'));
+    document.getElementById('btn-down').addEventListener('click', () => placeTrade('down'));
+
+    // Render open trades with countdown
+    function renderOpenTrades() {
+      const container = document.getElementById('open-trades-list');
+      Object.values(countdownIntervals).forEach(clearInterval);
+      countdownIntervals = {};
+
+      const pending = openTradesData.filter(t => t.result === 'pending');
+      if (!pending.length) {
+        container.innerHTML = '<div class="no-trades">No open trades. Place your first trade above!</div>';
+        return;
+      }
+
+      container.innerHTML = pending.map(trade => `
+        <div class="trade-item" id="trade-${trade.id}">
+          <div class="trade-info">
+            <div style="font-weight:600; font-size:14px;">${(trade.game_providers?.name || currentProvider).toUpperCase()}</div>
+            <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
+              Stake: <strong style="color:var(--text-primary);">${formatPHP(trade.stake)}</strong>
+              &nbsp;·&nbsp; Payout: <strong style="color:var(--accent-green);">${formatPHP(parseFloat(trade.stake)*1.8)}</strong>
+            </div>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span class="badge badge-${trade.direction}">${trade.direction.toUpperCase()}</span>
+            <span class="trade-countdown" id="countdown-${trade.id}">—</span>
+          </div>
+        </div>
+      `).join('');
+
+      pending.forEach(trade => {
+        const closeAt = new Date(trade.trade_close_at).getTime();
+        const el = document.getElementById(`countdown-${trade.id}`);
+        if (!el) return;
+
+        const tick = () => {
+          const remaining = Math.max(0, Math.ceil((closeAt - Date.now()) / 1000));
+          el.textContent = formatCountdown(remaining);
+          if (remaining <= 0) {
+            clearInterval(countdownIntervals[trade.id]);
+            el.textContent = 'Settling...';
+            setTimeout(() => loadDashboard(), 2000);
+          }
+        };
+        tick();
+        countdownIntervals[trade.id] = setInterval(tick, 1000);
+      });
+    }
+
+    // Poll for settled trades every 5s
+    let lastSettled = [];
+    async function pollSettlements() {
+      const res = await apiFetch('/api/member/dashboard');
+      if (!res || !res.ok) return;
+
+      const { open_trades } = res.data;
+      const newPending = (open_trades || []).map(t => t.id);
+      const wasOpen = openTradesData.filter(t => t.result === 'pending').map(t => t.id);
+
+      wasOpen.forEach(id => {
+        if (!newPending.includes(id)) {
+          // Trade settled — check result
+          apiFetch('/api/member/trades?limit=5').then(r => {
+            const settled = (r?.data?.trades || []).find(t => t.id === id);
+            if (settled) {
+              if (settled.result === 'win') {
+                showToast('🏆 Trade Won!', `+${formatPHP(settled.payout_amount)} credited`, 'success', 5000);
+              } else if (settled.result === 'loss') {
+                showToast('❌ Trade Lost', `Better luck next time!`, 'error', 4000);
+              }
+            }
+          });
+        }
+      });
+
+      openTradesData = open_trades || [];
+      renderOpenTrades();
+    }
+
+    // Init
+    loadDashboard().then(() => loadChart(currentProvider));
+    setInterval(pollSettlements, 5000);
+  </script>
+</body>
+</html>
