@@ -38,13 +38,18 @@ html { animation: _pageEnter 0.13s ease; }
 .sidebar-overlay {
   display: none;
   position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.65);
-  z-index: 299;
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
+  top: 0;
+  left: 0;           /* starts full-width by default (hidden) */
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 250;      /* above content, below sidebar at 300 */
+  /* NO backdrop-filter — causes stacking context bugs on Android Chrome */
 }
-.sidebar-overlay.mob-open { display: block; }
+.sidebar-overlay.mob-open {
+  display: block;
+  left: 240px;       /* KEY FIX: only cover content area, NOT the sidebar */
+}
 
 /* ═══════════════════════════════════════════════════════════════
    4. RESPONSIVE — max-width 768px
