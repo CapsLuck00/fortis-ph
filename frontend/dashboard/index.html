@@ -534,10 +534,8 @@ async function loadDashboard() {
   document.getElementById('wallet-trade-chg').textContent = `${totalTrades} trades completed`;
 
   // Interest display
-  document.getElementById('interest-rate-display').textContent =
-    `${dailyPct}% per day · ${monthlyPct}% per month`;
-  document.getElementById('interest-live-display').textContent =
-    `+${formatPHP(ratePerSec * balance)} / sec`;
+  document.getElementById('interest-rate-display').textContent = `${dailyPct}% daily · ${monthlyPct}% monthly`;
+  document.getElementById('interest-live-display').textContent = balance > 0 ? `+${formatPHP(ratePerSec * balance)} / sec` : 'Start earning with a deposit';
 
   // Start live interest counter
   startInterestTicker(balance, ratePerSec);

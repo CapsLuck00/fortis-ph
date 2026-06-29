@@ -69,7 +69,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,0.02
 <aside id="sidebar"><div class="nav-section"><div class="nav-label">Overview</div><a href="/dashboard/index.html" class="nav-item"><span class="nav-icon">&#128202;</span>Dashboard</a><a href="/dashboard/wallet.html" class="nav-item"><span class="nav-icon">&#128220;</span>Wallet</a><a href="/dashboard/exchange.html" class="nav-item"><span class="nav-icon">&#128260;</span>Exchange</a><a href="/dashboard/markets.html" class="nav-item"><span class="nav-icon">&#127758;</span>Markets</a></div><div class="nav-section"><div class="nav-label">Trading</div><a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">&#9889;</span>Trade</a><a href="/dashboard/copy-trading.html" class="nav-item"><span class="nav-icon">&#128101;</span>Copy Trading<span class="nb-new">NEW</span></a><a href="/dashboard/analytics.html" class="nav-item"><span class="nav-icon">&#128202;</span>Analytics</a></div><div class="nav-section"><div class="nav-label">Account</div><a href="/dashboard/deposit.html" class="nav-item active"><span class="nav-icon">&#128179;</span>Deposit</a><a href="/dashboard/withdraw.html" class="nav-item"><span class="nav-icon">&#129319;</span>Withdraw</a><a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#9881;&#65039;</span>Settings</a><a href="/dashboard/education.html" class="nav-item"><span class="nav-icon">&#128218;</span>Education</a></div><div class="sidebar-footer">
     <div class="sidebar-user-card">
       <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
-      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">&#8369;&#8212;</div></div>
+      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">₱&#8212;</div></div>
     </div>
     <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">&#128682;</span>Logout</a>
   </div></aside>
@@ -95,18 +95,18 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,0.02
           <label>Amount (PHP)</label>
           <input type="number" id="dep-amount" placeholder="e.g. 500" min="100" oninput="updateDepFee()">
           <div class="qamt-row">
-            <span class="qamt" onclick="setAmt(500)">&#8369;500</span>
-            <span class="qamt" onclick="setAmt(1000)">&#8369;1,000</span>
-            <span class="qamt" onclick="setAmt(2500)">&#8369;2,500</span>
-            <span class="qamt" onclick="setAmt(5000)">&#8369;5,000</span>
-            <span class="qamt" onclick="setAmt(10000)">&#8369;10,000</span>
+            <span class="qamt" onclick="setAmt(500)">₱500</span>
+            <span class="qamt" onclick="setAmt(1000)">₱1,000</span>
+            <span class="qamt" onclick="setAmt(2500)">₱2,500</span>
+            <span class="qamt" onclick="setAmt(5000)">₱5,000</span>
+            <span class="qamt" onclick="setAmt(10000)">₱10,000</span>
           </div>
         </div>
         <div class="form-group"><label>Reference / Transaction Number</label><input type="text" id="dep-ref" placeholder="e.g. 12345678901 or TXN-XXXXXX"></div>
         <div class="info-box" style="margin-bottom:14px">
-          <div class="info-row"><span class="info-label">Deposit Amount</span><span class="info-val" id="dep-amt-show">&#8369;0.00</span></div>
-          <div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">&#8369;0.00 (FREE)</span></div>
-          <div class="info-row"><span class="info-label">You will receive</span><span class="info-val" style="color:var(--green);font-size:15px" id="dep-recv">&#8369;0.00</span></div>
+          <div class="info-row"><span class="info-label">Deposit Amount</span><span class="info-val" id="dep-amt-show">₱0.00</span></div>
+          <div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">₱0.00 (FREE)</span></div>
+          <div class="info-row"><span class="info-label">You will receive</span><span class="info-val" style="color:var(--green);font-size:15px" id="dep-recv">₱0.00</span></div>
         </div>
         <button class="btn btn-blue" style="width:100%;padding:12px" onclick="submitDeposit()" id="dep-btn">&#128179; Submit Deposit Request</button>
       </div>
@@ -114,7 +114,7 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,0.02
     <div>
       <div style="background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:16px;margin-bottom:16px">
         <div style="font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">&#8505; Your Balance</div>
-        <div style="font-size:32px;font-weight:800;letter-spacing:-1px" id="bal-val">&#8369;&#8212;</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-1px" id="bal-val">₱&#8212;</div>
         <div style="font-size:11px;color:var(--muted2);margin-top:4px">Available trading balance</div>
       </div>
       <div class="card">
@@ -134,15 +134,15 @@ tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,0.02
 redirectIfNotLoggedIn();
 const _u=getUser();
 if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
-async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">&#8369;'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
-async function loadBalMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});const bv=document.getElementById('bal-val');if(bv)bv.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">₱'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
+async function loadBalMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});const bv=document.getElementById('bal-val');if(bv)bv.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 loadTicker();loadBalMini();setInterval(loadTicker,8000);
 const methodDetails={
   gcash:{label:'GCash',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; GCash</div><div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Official</span></div><div class="info-row"><span class="info-label">GCash Number</span><span class="info-val" style="color:var(--blue)">0917-123-4567</span></div><div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>'},
   maya:{label:'Maya',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; Maya</div><div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Official</span></div><div class="info-row"><span class="info-label">Maya Number</span><span class="info-val" style="color:var(--blue)">0927-987-6543</span></div><div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>'},
   bank:{label:'Bank Transfer',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; Bank Transfer</div><div class="info-row"><span class="info-label">Bank</span><span class="info-val">BDO / BPI / UnionBank</span></div><div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Inc</span></div><div class="info-row"><span class="info-label">Account No.</span><span class="info-val" style="color:var(--blue)">1234-5678-9012</span></div><div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>'},
-  usdt:{label:'USDT (TRC-20)',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; USDT TRC-20</div><div class="info-row"><span class="info-label">Network</span><span class="info-val">TRON (TRC-20)</span></div><div class="info-row"><span class="info-label">Wallet Address</span><span class="info-val" style="color:var(--blue);font-size:11px;word-break:break-all">TXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></div><div class="info-row"><span class="info-label">Rate</span><span class="info-val">1 USDT = &#8369;57.00</span></div>'}
+  usdt:{label:'USDT (TRC-20)',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; USDT TRC-20</div><div class="info-row"><span class="info-label">Network</span><span class="info-val">TRON (TRC-20)</span></div><div class="info-row"><span class="info-label">Wallet Address</span><span class="info-val" style="color:var(--blue);font-size:11px;word-break:break-all">TXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></div><div class="info-row"><span class="info-label">Rate</span><span class="info-val">1 USDT = ₱57.00</span></div>'}
 };
 let selMethod='gcash';
 function selectMethod(m,el){
@@ -151,7 +151,7 @@ function selectMethod(m,el){
   document.getElementById('method-details').innerHTML=methodDetails[m].details;
 }
 function setAmt(v){document.getElementById('dep-amount').value=v;updateDepFee();}
-function updateDepFee(){const v=parseFloat(document.getElementById('dep-amount').value)||0;document.getElementById('dep-amt-show').textContent='&#8369;'+v.toLocaleString('en-PH',{minimumFractionDigits:2});document.getElementById('dep-recv').textContent='&#8369;'+v.toLocaleString('en-PH',{minimumFractionDigits:2});}
+function updateDepFee(){const v=parseFloat(document.getElementById('dep-amount').value)||0;document.getElementById('dep-amt-show').textContent='₱'+v.toLocaleString('en-PH',{minimumFractionDigits:2});document.getElementById('dep-recv').textContent='₱'+v.toLocaleString('en-PH',{minimumFractionDigits:2});}
 async function submitDeposit(){
   const amt=parseFloat(document.getElementById('dep-amount').value);
   const ref=document.getElementById('dep-ref').value.trim();
@@ -171,7 +171,7 @@ async function loadHistory(){
   tbody.innerHTML=txns.map(t=>{
     const d=new Date(t.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'2-digit'});
     const s=t.status;const sc=s==='approved'?'approved':s==='rejected'?'rejected':'pending';
-    return '<tr><td>'+d+'</td><td style="font-weight:600">&#8369;'+parseFloat(t.amount).toLocaleString('en-PH',{minimumFractionDigits:2})+'</td><td>'+t.payment_method+'</td><td><span class="badge '+sc+'">'+s+'</span></td></tr>';
+    return '<tr><td>'+d+'</td><td style="font-weight:600">₱'+parseFloat(t.amount).toLocaleString('en-PH',{minimumFractionDigits:2})+'</td><td>'+t.payment_method+'</td><td><span class="badge '+sc+'">'+s+'</span></td></tr>';
   }).join('');
 }
 loadHistory();

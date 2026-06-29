@@ -76,7 +76,7 @@ input:checked+.slider::before{transform:translateX(20px)}
 <aside id="sidebar"><div class="nav-section"><div class="nav-label">Overview</div><a href="/dashboard/index.html" class="nav-item"><span class="nav-icon">&#128202;</span>Dashboard</a><a href="/dashboard/wallet.html" class="nav-item"><span class="nav-icon">&#128220;</span>Wallet</a><a href="/dashboard/exchange.html" class="nav-item"><span class="nav-icon">&#128260;</span>Exchange</a><a href="/dashboard/markets.html" class="nav-item"><span class="nav-icon">&#127758;</span>Markets</a></div><div class="nav-section"><div class="nav-label">Trading</div><a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">&#9889;</span>Trade</a><a href="/dashboard/copy-trading.html" class="nav-item"><span class="nav-icon">&#128101;</span>Copy Trading<span class="nb-new">NEW</span></a><a href="/dashboard/analytics.html" class="nav-item"><span class="nav-icon">&#128202;</span>Analytics</a></div><div class="nav-section"><div class="nav-label">Account</div><a href="/dashboard/deposit.html" class="nav-item"><span class="nav-icon">&#128179;</span>Deposit</a><a href="/dashboard/withdraw.html" class="nav-item"><span class="nav-icon">&#129319;</span>Withdraw</a><a href="/dashboard/settings.html" class="nav-item active"><span class="nav-icon">&#9881;&#65039;</span>Settings</a><a href="/dashboard/education.html" class="nav-item"><span class="nav-icon">&#128218;</span>Education</a></div><div class="sidebar-footer">
     <div class="sidebar-user-card">
       <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
-      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">&#8369;&#8212;</div></div>
+      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">₱&#8212;</div></div>
     </div>
     <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">&#128682;</span>Logout</a>
   </div></aside>
@@ -129,11 +129,19 @@ input:checked+.slider::before{transform:translateX(20px)}
 redirectIfNotLoggedIn();
 const _u=getUser();
 if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
-async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">&#8369;'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
-async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">₱'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
+async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 loadTicker();loadDashMini();setInterval(loadTicker,8000);
 async function loadProfile(){
+  // Pre-fill from cached user data instantly
+  const _cu=getUser();
+  if(_cu){
+    const ini=(_cu.username||'U').charAt(0).toUpperCase();
+    document.getElementById('profile-avatar').textContent=ini;
+    document.getElementById('profile-name').textContent=_cu.username||'—';
+    document.getElementById('s-name').value=_cu.username||'';
+  }
   const r=await apiFetch('/api/member/dashboard');
   if(!r||!r.ok)return;
   const m=r.data.data?.member;if(!m)return;
