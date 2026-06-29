@@ -1,155 +1,191 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Withdraw — FortisPH</title>
-  <link rel="stylesheet" href="/assets/css/main.css" />
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Withdraw &#8212; FortisPH</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden}
+.ticker-item{padding:0 16px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap}
+.t-name{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}.t-val{font-size:12px;font-weight:700}.t-chg{font-size:11px;font-weight:600}.t-chg.up{color:var(--green)}.t-chg.dn{color:var(--red)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(59,130,246,0.1);border-left-color:var(--blue);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.nb-new{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:auto;background:var(--blue);color:#fff}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-bal{font-size:11px;color:var(--green);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-title{font-size:20px;font-weight:800;margin-bottom:2px}.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}.btn-blue:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+input,select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;transition:border .15s}
+input:focus,select:focus{border-color:var(--blue)}input::placeholder{color:var(--muted)}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:5px}
+.form-group{margin-bottom:14px}
+.method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.method-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s}
+.method-card:hover{border-color:var(--blue)}
+.method-card.selected{border-color:var(--blue);background:var(--blue-dim)}
+.method-icon{font-size:24px;margin-bottom:6px}.method-name{font-size:12px;font-weight:600}
+.qamt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.qamt{padding:6px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.qamt:hover{border-color:var(--blue);color:var(--blue)}
+.info-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border2);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--muted2)}.info-val{font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}</style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Member Portal</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/dashboard/deposit.html"><span class="nav-icon">💰</span> Deposit</a>
-        <a href="/dashboard/withdraw.html" class="active"><span class="nav-icon">💸</span> Withdraw</a>
-        <a href="/dashboard/history.html"><span class="nav-icon">📜</span> History</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">Withdraw Funds</div>
-      </header>
-
-      <div class="page-body">
-        <div class="grid-2" style="max-width: 900px;">
-          <!-- Withdraw Form -->
-          <div class="card" id="withdraw-form-card">
-            <h3 class="section-title">Withdrawal Request</h3>
-
-            <!-- Balance Display -->
-            <div style="background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px 18px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center;">
-              <span style="color: var(--text-muted); font-size: 13px;">Available Balance</span>
-              <span id="balance-display" style="font-size: 20px; font-weight: 700; color: var(--accent-gold);">₱0.00</span>
-            </div>
-
-            <div id="form-error" class="alert alert-error" style="display:none;"></div>
-
-            <form id="withdraw-form">
-              <div class="form-group">
-                <label for="amount">Amount to Withdraw (₱)</label>
-                <input type="number" id="amount" class="form-control" placeholder="Enter amount" min="100" step="50" required />
-              </div>
-
-              <div class="form-group">
-                <label for="payment-method">Payment Method</label>
-                <select id="payment-method" class="form-control" required>
-                  <option value="">Select payout method</option>
-                  <option value="GCash">GCash</option>
-                  <option value="Maya">Maya</option>
-                  <option value="Online Banking">Online Banking</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="account-number">Account Number / Mobile Number</label>
-                <input type="text" id="account-number" class="form-control" placeholder="e.g. 0917 234 5678" required />
-              </div>
-
-              <div class="form-group">
-                <label for="account-name">Account Name</label>
-                <input type="text" id="account-name" class="form-control" placeholder="Your registered account name" required />
-              </div>
-
-              <button type="submit" class="btn btn-primary btn-full" id="withdraw-btn">
-                💸 Submit Withdrawal Request
-              </button>
-            </form>
-          </div>
-
-          <!-- Info -->
-          <div>
-            <div class="card" style="margin-bottom: 16px;">
-              <h4 class="section-title">Withdrawal Policy</h4>
-              <ul style="color: var(--text-secondary); font-size: 14px; line-height: 1.9; padding-left: 18px;">
-                <li>Minimum withdrawal: <strong style="color:var(--text-primary);">₱100</strong></li>
-                <li>Processing time: <strong style="color:var(--text-primary);">1–24 hours</strong></li>
-                <li>Your balance is held pending admin approval</li>
-                <li>Rejected withdrawals are refunded to balance</li>
-                <li>Ensure account details are accurate</li>
-              </ul>
-            </div>
-            <div class="alert alert-warning">
-              ⚠️ Withdrawals are reviewed and processed manually by admins. Please allow up to 24 hours.
-            </div>
+<div id="ticker-bar">
+  <div class="ticker-brand">&#9889; FortisPH</div>
+  <div class="ticker-items" id="ticker-items"><div class="ticker-item" style="color:var(--muted);font-size:12px">Loading...</div></div>
+  <div class="ticker-user"><div><div class="u-name" id="tk-name">&#8212;</div><div class="u-badge">MEMBER</div></div><div class="ticker-avatar" id="tk-avatar">U</div></div>
+</div>
+<div id="app">
+<aside id="sidebar"><div class="nav-section"><div class="nav-label">Overview</div><a href="/dashboard/index.html" class="nav-item"><span class="nav-icon">&#128202;</span>Dashboard</a><a href="/dashboard/wallet.html" class="nav-item"><span class="nav-icon">&#128220;</span>Wallet</a><a href="/dashboard/exchange.html" class="nav-item"><span class="nav-icon">&#128260;</span>Exchange</a><a href="/dashboard/markets.html" class="nav-item"><span class="nav-icon">&#127758;</span>Markets</a></div><div class="nav-section"><div class="nav-label">Trading</div><a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">&#9889;</span>Trade</a><a href="/dashboard/copy-trading.html" class="nav-item"><span class="nav-icon">&#128101;</span>Copy Trading<span class="nb-new">NEW</span></a><a href="/dashboard/analytics.html" class="nav-item"><span class="nav-icon">&#128202;</span>Analytics</a></div><div class="nav-section"><div class="nav-label">Account</div><a href="/dashboard/deposit.html" class="nav-item"><span class="nav-icon">&#128179;</span>Deposit</a><a href="/dashboard/withdraw.html" class="nav-item active"><span class="nav-icon">&#129319;</span>Withdraw</a><a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#9881;&#65039;</span>Settings</a><a href="/dashboard/education.html" class="nav-item"><span class="nav-icon">&#128218;</span>Education</a></div><div class="sidebar-footer">
+    <div class="sidebar-user-card">
+      <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
+      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">&#8369;&#8212;</div></div>
+    </div>
+    <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">&#128682;</span>Logout</a>
+  </div></aside>
+<div id="main">
+  <div><div class="page-title">&#129319; Withdraw Funds</div><div class="page-sub">Cash out your earnings. 2% processing fee. Processed within 24 hours.</div></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Select Withdrawal Method</div>
+        <div class="method-grid">
+          <div class="method-card selected" onclick="selectWMethod('gcash',this)"><div class="method-icon">&#128155;</div><div class="method-name">GCash</div></div>
+          <div class="method-card" onclick="selectWMethod('maya',this)"><div class="method-icon">&#128153;</div><div class="method-name">Maya</div></div>
+          <div class="method-card" onclick="selectWMethod('bank',this)"><div class="method-icon">&#127981;</div><div class="method-name">Bank</div></div>
+          <div class="method-card" onclick="selectWMethod('usdt',this)"><div class="method-icon">&#9881;</div><div class="method-name">USDT</div></div>
+        </div>
+        <div class="form-group">
+          <label id="acc-label">GCash Number</label>
+          <input type="text" id="w-account" placeholder="09XX-XXX-XXXX">
+        </div>
+        <div class="form-group"><label>Account Name</label><input type="text" id="w-accname" placeholder="Name registered on account"></div>
+        <div class="form-group">
+          <label>Amount (PHP)</label>
+          <input type="number" id="w-amount" placeholder="Minimum PHP 200" min="200" oninput="updateWFee()">
+          <div class="qamt-row">
+            <span class="qamt" onclick="setWAmt(200)">&#8369;200</span>
+            <span class="qamt" onclick="setWAmt(500)">&#8369;500</span>
+            <span class="qamt" onclick="setWAmt(1000)">&#8369;1,000</span>
+            <span class="qamt" onclick="setWAmt(2500)">&#8369;2,500</span>
+            <span class="qamt" onclick="setWAll()">Withdraw All</span>
           </div>
         </div>
-
-        <!-- Success State -->
-        <div class="card" id="success-card" style="display:none; max-width: 520px; margin: 0 auto; text-align: center; padding: 40px 24px;">
-          <div style="font-size: 56px; margin-bottom: 16px;">⏳</div>
-          <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">Withdrawal Submitted!</h3>
-          <p style="color: var(--text-muted);">Your withdrawal request is pending admin approval. Funds will be sent to your account within 24 hours.</p>
-          <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
-            <a href="/dashboard/history.html" class="btn btn-primary">View History</a>
-            <a href="/dashboard/index.html" class="btn btn-ghost">Dashboard</a>
-          </div>
+        <div class="info-box" style="margin-bottom:14px">
+          <div class="info-row"><span class="info-label">Withdrawal Amount</span><span class="info-val" id="w-amt-show">&#8369;0.00</span></div>
+          <div class="info-row"><span class="info-label">Processing Fee (2%)</span><span class="info-val" style="color:var(--red)" id="w-fee">&#8212;&#8369;0.00</span></div>
+          <div class="info-row"><span class="info-label">You will receive</span><span class="info-val" style="color:var(--green);font-size:15px" id="w-recv">&#8369;0.00</span></div>
+        </div>
+        <button class="btn btn-blue" style="width:100%;padding:12px" onclick="submitWithdraw()" id="w-btn">&#129319; Submit Withdrawal Request</button>
+      </div>
+    </div>
+    <div>
+      <div style="background:var(--green-dim);border:1px solid var(--green);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">&#128200; Available Balance</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-1px" id="bal-val">&#8369;&#8212;</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:4px">Minimum withdrawal: <strong>PHP 200</strong></div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Withdrawal History</div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+          <tbody id="with-history"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Loading...</td></tr></tbody>
+          </table>
         </div>
       </div>
-    </main>
+    </div>
   </div>
-
-  <div id="toast-container"></div>
-  <script src="/assets/js/api.js"></script>
-  <script>
-    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
-
-    // Load balance
-    apiFetch('/api/member/dashboard').then(res => {
-      if (res && res.ok) {
-        document.getElementById('balance-display').textContent = formatPHP(res.data.balance);
-      }
-    });
-
-    document.getElementById('withdraw-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const errorEl = document.getElementById('form-error');
-      errorEl.style.display = 'none';
-
-      const amount = parseFloat(document.getElementById('amount').value);
-      const payment_method = document.getElementById('payment-method').value;
-      const account_number = document.getElementById('account-number').value.trim();
-      const account_name = document.getElementById('account-name').value.trim();
-
-      if (amount < 100) { errorEl.textContent = 'Minimum withdrawal is ₱100'; errorEl.style.display = 'flex'; return; }
-
-      const btn = document.getElementById('withdraw-btn');
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
-
-      const res = await apiFetch('/api/member/withdraw', 'POST', { amount, payment_method, account_number, account_name });
-
-      if (res && res.ok) {
-        document.getElementById('withdraw-form-card').style.display = 'none';
-        document.getElementById('success-card').style.display = 'block';
-      } else {
-        errorEl.textContent = res?.data?.error || 'Submission failed. Try again.';
-        errorEl.style.display = 'flex';
-        btn.disabled = false;
-        btn.textContent = '💸 Submit Withdrawal Request';
-      }
-    });
-  </script>
+</div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotLoggedIn();
+const _u=getUser();
+if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">&#8369;'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
+async function loadBalMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});const bv=document.getElementById('bal-val');if(bv)bv.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();loadBalMini();setInterval(loadTicker,8000);
+const wMethodLabels={gcash:'GCash Number',maya:'Maya Number',bank:'Bank Account Number',usdt:'USDT Wallet Address'};
+const wMethodPlaceholders={gcash:'09XX-XXX-XXXX',maya:'09XX-XXX-XXXX',bank:'Account number',usdt:'TRC-20 wallet address'};
+let selWMethod='gcash';let currentBal=0;
+function selectWMethod(m,el){
+  document.querySelectorAll('.method-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');selWMethod=m;
+  document.getElementById('acc-label').textContent=wMethodLabels[m];
+  document.getElementById('w-account').placeholder=wMethodPlaceholders[m];
+}
+function setWAmt(v){document.getElementById('w-amount').value=v;updateWFee();}
+function setWAll(){setWAmt(Math.max(0,Math.floor(currentBal*100)/100));}
+function updateWFee(){
+  const v=parseFloat(document.getElementById('w-amount').value)||0;
+  const fee=v*.02;const recv=v-fee;
+  document.getElementById('w-amt-show').textContent='&#8369;'+v.toLocaleString('en-PH',{minimumFractionDigits:2});
+  document.getElementById('w-fee').textContent='-&#8369;'+fee.toLocaleString('en-PH',{minimumFractionDigits:2});
+  document.getElementById('w-recv').textContent='&#8369;'+recv.toLocaleString('en-PH',{minimumFractionDigits:2});
+}
+async function submitWithdraw(){
+  const amt=parseFloat(document.getElementById('w-amount').value);
+  const acc=document.getElementById('w-account').value.trim();
+  const name=document.getElementById('w-accname').value.trim();
+  if(!amt||amt<200){showToast('Minimum withdrawal is PHP 200',true);return;}
+  if(amt>currentBal){showToast('Insufficient balance',true);return;}
+  if(!acc){showToast('Account number is required',true);return;}
+  if(!name){showToast('Account name is required',true);return;}
+  const btn=document.getElementById('w-btn');btn.disabled=true;btn.textContent='Submitting...';
+  const r=await apiFetch('/api/member/withdraw','POST',{amount:amt,payment_method:selWMethod,account_number:acc,account_name:name});
+  btn.disabled=false;btn.innerHTML='&#129319; Submit Withdrawal Request';
+  if(r&&r.ok){showToast('Withdrawal submitted! Processing within 24hrs.');document.getElementById('w-amount').value='';document.getElementById('w-account').value='';document.getElementById('w-accname').value='';updateWFee();loadWHistory();}
+  else{showToast(r?.data?.message||'Withdrawal failed',true);}
+}
+async function loadWBalance(){
+  const r=await apiFetch('/api/member/dashboard');
+  if(!r||!r.ok)return;
+  const d=r.data.data?.member;if(!d)return;
+  currentBal=parseFloat(d.balance||0);
+}
+async function loadWHistory(){
+  const r=await apiFetch('/api/member/transactions?type=withdrawal');
+  const tbody=document.getElementById('with-history');
+  const txns=r?.data?.data?.transactions||[];
+  if(!txns.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">No withdrawal history</td></tr>';return;}
+  tbody.innerHTML=txns.map(t=>{
+    const d=new Date(t.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'2-digit'});
+    const s=t.status;const sc=s==='approved'?'approved':s==='rejected'?'rejected':'pending';
+    return '<tr><td>'+d+'</td><td style="font-weight:600">&#8369;'+parseFloat(t.amount).toLocaleString('en-PH',{minimumFractionDigits:2})+'</td><td>'+t.payment_method+'</td><td><span class="badge '+sc+'">'+s+'</span></td></tr>';
+  }).join('');
+}
+loadWBalance();loadWHistory();
+</script>
 </body>
 </html>

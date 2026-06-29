@@ -1,262 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Users — FortisPH Admin</title>
-  <link rel="stylesheet" href="/assets/css/main.css" />
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Members — FortisPH Admin</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.badge-admin{font-size:9px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:3px;font-weight:700}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden}
+.ticker-item{padding:0 18px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap;gap:2px}
+.t-name{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.t-val{font-size:13px;font-weight:700}.t-val.green{color:var(--green)}.t-val.gold{color:var(--gold)}.t-val.red{color:var(--red)}.t-val.blue{color:var(--blue)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--red);background:var(--red-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(239,68,68,0.08);border-left-color:var(--red);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-role{font-size:11px;color:var(--red);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.page-title{font-size:20px;font-weight:800;color:var(--text)}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s}
+.filter-btn:hover,.filter-btn.active{background:var(--blue-dim);color:var(--blue);border-color:var(--blue)}
+input[type=text],input[type=number],select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:13px;outline:none;transition:border .15s}
+input[type=text]:focus,select:focus{border-color:var(--blue)}
+input[type=text]::placeholder{color:var(--muted)}
+.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{opacity:.85}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)}.btn-gold:hover{background:var(--gold);color:#000}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}
+.badge.active,.badge.online{background:var(--green-dim);color:var(--green)}.badge.inactive{background:var(--border);color:var(--muted2)}
+.badge.deposit{background:var(--green-dim);color:var(--green)}.badge.withdrawal{background:var(--blue-dim);color:var(--blue)}
+.badge.interest{background:var(--gold-dim);color:var(--gold)}.badge.trade_win{background:var(--green-dim);color:var(--green)}.badge.trade_loss{background:var(--red-dim);color:var(--red)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:460px;max-width:95vw;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{cursor:pointer;color:var(--muted);font-size:20px;line-height:1}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:4px}
+.form-group{margin-bottom:14px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.bal-input{width:110px;padding:5px 8px;font-size:12px}
+</style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Admin Panel</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin/index.html"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/chart.html"><span class="nav-icon">📈</span> Chart Control</a>
-        <a href="/admin/users.html" class="active"><span class="nav-icon">👥</span> Users</a>
-        <a href="/admin/transactions.html"><span class="nav-icon">💳</span> Transactions</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">User Management</div>
-        <div class="topbar-right">
-          <button class="btn btn-ghost btn-sm" onclick="loadUsers()">🔄 Refresh</button>
-        </div>
-      </header>
-
-      <div class="page-body">
-        <!-- Search -->
-        <div class="search-input-wrap" style="max-width:400px; margin-bottom:20px;">
-          <span class="search-icon">🔍</span>
-          <input type="text" class="form-control" id="user-search" placeholder="Search by username or email..." oninput="filterUsers()" />
-        </div>
-
-        <!-- Users Table -->
-        <div class="card">
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Username</th>
-                  <th>Email</th>
-                  <th>Balance</th>
-                  <th>Role</th>
-                  <th>Status</th>
-                  <th>Joined</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="users-tbody">
-                <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:32px;">Loading...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </main>
+<div id="ticker-bar">
+  <div class="ticker-brand">⚡ FortisPH <span class="badge-admin">ADMIN</span></div>
+  <div class="ticker-items" id="ticker-items">
+    <div class="ticker-item"><div class="t-name">Members</div><div class="t-val blue" id="tk-members">—</div></div>
+    <div class="ticker-item"><div class="t-name">Platform Balance</div><div class="t-val green" id="tk-balance">—</div></div>
+    <div class="ticker-item"><div class="t-name">Pending Deposits</div><div class="t-val gold" id="tk-deposits">—</div></div>
+    <div class="ticker-item"><div class="t-name">Pending Withdrawals</div><div class="t-val red" id="tk-withdrawals">—</div></div>
   </div>
-
-  <!-- User Detail Modal -->
-  <div class="modal-overlay hidden" id="user-modal">
-    <div class="modal" style="max-width: 700px;">
-      <div class="modal-header">
-        <div class="modal-title">User Detail — <span id="modal-username"></span></div>
-        <button class="modal-close" onclick="closeUserModal()">×</button>
+  <div class="ticker-user">
+    <div><div class="u-name" id="admin-name">Admin</div><div class="u-badge">ADMIN</div></div>
+    <div class="ticker-avatar" id="admin-avatar">A</div>
+  </div>
+</div>
+<div id="app">
+  
+  <aside id="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <a href="/admin/index.html" class="nav-item "><span class="nav-icon">📊</span>Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Members</div>
+      <a href="/admin/users.html" class="nav-item active"><span class="nav-icon">👥</span>Members</a>
+      <a href="/admin/transactions.html?type=deposit" class="nav-item "><span class="nav-icon">💳</span>Deposits</a>
+      <a href="/admin/transactions.html?type=withdrawal" class="nav-item "><span class="nav-icon">🏧</span>Withdrawals</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Platform</div>
+      <a href="/admin/transactions.html" class="nav-item "><span class="nav-icon">📋</span>Transactions</a>
+      <a href="/admin/chart.html" class="nav-item "><span class="nav-icon">📈</span>Chart Control</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-card">
+        <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">A</div>
+        <div><div class="s-name" id="sb-name">Admin</div><div class="s-role">Administrator</div></div>
       </div>
-      <div class="modal-body">
-        <!-- Stats Row -->
-        <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:20px;" id="modal-stats"></div>
-
-        <!-- Adjust Balance -->
-        <div class="card card-sm" style="margin-bottom: 20px;">
-          <h4 class="section-title">Adjust Balance</h4>
-          <div style="display: flex; gap: 10px; align-items: flex-end;">
-            <div class="form-group" style="flex:1; margin:0;">
-              <label>Amount (positive to add, negative to subtract)</label>
-              <input type="number" id="adjust-amount" class="form-control" placeholder="e.g. 500 or -200" step="50" />
-            </div>
-            <div class="form-group" style="flex:1; margin:0;">
-              <label>Note</label>
-              <input type="text" id="adjust-note" class="form-control" placeholder="Reason for adjustment" />
-            </div>
-            <button class="btn btn-primary" onclick="adjustBalance()" style="margin-bottom:1px;">Apply</button>
-          </div>
-        </div>
-
-        <!-- Tabs: Transactions & Trades -->
-        <div class="tabs">
-          <button class="tab-btn active" data-tab="modal-tx">Last Transactions</button>
-          <button class="tab-btn" data-tab="modal-trades">Last Trades</button>
-        </div>
-        <div class="tab-panel active" id="tab-modal-tx">
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
-              <tbody id="modal-tx-tbody"></tbody>
-            </table>
-          </div>
-        </div>
-        <div class="tab-panel" id="tab-modal-trades">
-          <div class="table-wrap">
-            <table class="table">
-              <thead><tr><th>Date</th><th>Provider</th><th>Direction</th><th>Stake</th><th>Result</th><th>Payout</th></tr></thead>
-              <tbody id="modal-trades-tbody"></tbody>
-            </table>
-          </div>
-        </div>
+      <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">🚪</span>Logout</a>
+    </div>
+  </aside>
+  <div id="main">
+    <div>
+      <div class="page-hdr"><span class="page-title">👥 Members</span><button class="btn btn-blue" onclick="loadMembers()">↺ Refresh</button></div>
+      <div class="page-sub">Manage all registered member accounts.</div>
+      <div class="filters" style="margin-bottom:14px">
+        <input type="text" id="search" placeholder="Search username or email…" style="width:260px" oninput="filterMembers()">
+        <button class="filter-btn active" data-f="all" onclick="setFilter(this,'all')">All</button>
+        <button class="filter-btn" data-f="active" onclick="setFilter(this,'active')">Active</button>
+        <button class="filter-btn" data-f="inactive" onclick="setFilter(this,'inactive')">Inactive</button>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeUserModal()">Close</button>
-        <button class="btn btn-danger btn-sm" id="toggle-active-btn" onclick="toggleUserActive()">Deactivate</button>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>#</th><th>Username</th><th>Email</th><th>Balance</th><th>Rate/sec</th><th>Status</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="members-tbody"><tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">Loading…</td></tr></tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
+<!-- EDIT MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title">Edit Member <span class="modal-close" onclick="closeModal()">✕</span></div>
+    <input type="hidden" id="edit-id">
+    <div class="form-group"><label>Username</label><input type="text" id="edit-username" disabled style="opacity:.6"></div>
+    <div class="form-group"><label>Email</label><input type="text" id="edit-email" disabled style="opacity:.6"></div>
+    <div class="form-group"><label>Balance (₱)</label><input type="number" id="edit-balance" step="0.01" min="0"></div>
+    <div class="form-group"><label>Status</label>
+      <select id="edit-status"><option value="true">Active</option><option value="false">Inactive</option></select>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:16px">
+      <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn btn-blue" onclick="saveMember()">Save Changes</button>
+    </div>
+  </div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotAdmin();
+const user=getUser();
+if(user){const i=user.username?.charAt(0).toUpperCase()||'A';document.getElementById('admin-name').textContent=user.username;document.getElementById('admin-avatar').textContent=i;const sb=document.getElementById('sb-name');if(sb)sb.textContent=user.username;const sba=document.getElementById('sb-avatar');if(sba)sba.textContent=i;}
+async function loadTicker(){const r=await apiFetch('/api/admin/stats');if(!r||!r.ok)return;const d=r.data.data;const fmt=v=>'₱'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById('tk-members').textContent=d.totalMembers||0;document.getElementById('tk-balance').textContent=fmt(d.totalBalance);document.getElementById('tk-deposits').textContent=d.pendingDeposits||0;document.getElementById('tk-withdrawals').textContent=d.pendingWithdrawals||0;}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();setInterval(loadTicker,30000);
+let allMembers=[];
+let currentFilter='all';
 
-  <div id="toast-container"></div>
-  <script src="/assets/js/api.js"></script>
-  <script>
-    if (!redirectIfNotAdmin()) throw new Error('Not admin');
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
+async function loadMembers(){
+  const r=await apiFetch('/api/admin/members?limit=100');
+  if(!r||!r.ok)return;
+  allMembers=r.data.data?.members||[];
+  renderMembers(allMembers);
+}
 
-    let allUsers = [];
-    let selectedUserId = null;
-    let selectedUserActive = true;
+function setFilter(el,f){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  el.classList.add('active');currentFilter=f;filterMembers();
+}
 
-    // Tabs in modal
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
-        btn.classList.add('active');
-        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
-      });
-    });
+function filterMembers(){
+  const q=document.getElementById('search').value.toLowerCase();
+  let list=allMembers;
+  if(currentFilter==='active')list=list.filter(m=>m.is_active);
+  else if(currentFilter==='inactive')list=list.filter(m=>!m.is_active);
+  if(q)list=list.filter(m=>(m.username+' '+m.email).toLowerCase().includes(q));
+  renderMembers(list);
+}
 
-    async function loadUsers() {
-      const res = await apiFetch('/api/admin/users');
-      if (!res || !res.ok) return;
-      allUsers = res.data.users || [];
-      renderUsers(allUsers);
-    }
+function renderMembers(members){
+  const tbody=document.getElementById('members-tbody');
+  if(!members.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:24px">No members found</td></tr>';return;}
+  tbody.innerHTML=members.map((m,i)=>`
+    <tr>
+      <td style="color:var(--muted);font-size:12px">${i+1}</td>
+      <td><strong>${m.username}</strong><br><span style="font-size:11px;color:var(--muted)">${m.referral_code||''}</span></td>
+      <td style="color:var(--muted2);font-size:12px">${m.email}</td>
+      <td><strong style="color:var(--green)">₱${parseFloat(m.balance||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</strong></td>
+      <td style="color:var(--muted);font-size:12px">${m.interest_rate_per_second||'0.000035'}</td>
+      <td><span class="badge ${m.is_active?'active':'inactive'}">${m.is_active?'Active':'Inactive'}</span></td>
+      <td style="color:var(--muted);font-size:12px">${new Date(m.created_at).toLocaleDateString()}</td>
+      <td style="display:flex;gap:6px;align-items:center">
+        <button class="btn btn-ghost" style="font-size:11px" onclick='openEdit(${JSON.stringify(m)})'>✏️ Edit</button>
+        <button class="btn ${m.is_active?'btn-red':'btn-green'}" style="font-size:11px" onclick="toggleActive('${m.id}',${m.is_active})">${m.is_active?'Deactivate':'Activate'}</button>
+      </td>
+    </tr>`).join('');
+}
 
-    function filterUsers() {
-      const q = document.getElementById('user-search').value.toLowerCase();
-      if (!q) { renderUsers(allUsers); return; }
-      const filtered = allUsers.filter(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
-      renderUsers(filtered);
-    }
+function openEdit(m){
+  document.getElementById('edit-id').value=m.id;
+  document.getElementById('edit-username').value=m.username;
+  document.getElementById('edit-email').value=m.email;
+  document.getElementById('edit-balance').value=parseFloat(m.balance||0).toFixed(2);
+  document.getElementById('edit-status').value=String(m.is_active);
+  document.getElementById('edit-modal').classList.add('show');
+}
 
-    function renderUsers(users) {
-      const tbody = document.getElementById('users-tbody');
-      if (!users.length) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">No users found</td></tr>';
-        return;
-      }
-      tbody.innerHTML = users.map(u => `
-        <tr>
-          <td class="primary">${u.username}</td>
-          <td style="color:var(--text-muted); font-size:13px;">${u.email}</td>
-          <td class="primary">${formatPHP(u.balance)}</td>
-          <td><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
-          <td><span class="badge ${u.is_active ? 'badge-approved' : 'badge-rejected'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
-          <td style="font-size:12px; color:var(--text-muted);">${formatDate(u.created_at)}</td>
-          <td><button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">View</button></td>
-        </tr>
-      `).join('');
-    }
+function closeModal(){document.getElementById('edit-modal').classList.remove('show');}
 
-    async function openUserModal(userId) {
-      selectedUserId = userId;
-      const res = await apiFetch(`/api/admin/users/${userId}`);
-      if (!res || !res.ok) { showToast('Error', 'Failed to load user', 'error'); return; }
+async function saveMember(){
+  const id=document.getElementById('edit-id').value;
+  const balance=parseFloat(document.getElementById('edit-balance').value);
+  const is_active=document.getElementById('edit-status').value==='true';
+  const r=await apiFetch('/api/admin/members/'+id,{method:'PATCH',body:JSON.stringify({balance,is_active})});
+  if(r&&r.ok){showToast('Member updated!');closeModal();loadMembers();}else{showToast('Error updating member','err');}
+}
 
-      const { user: u, transactions, trades } = res.data;
-      selectedUserActive = u.is_active;
-
-      document.getElementById('modal-username').textContent = u.username;
-      document.getElementById('modal-stats').innerHTML = `
-        <div class="card card-sm"><div class="card-title">Balance</div><div class="card-value gold" style="font-size:20px;">${formatPHP(u.balance)}</div></div>
-        <div class="card card-sm"><div class="card-title">Invested</div><div class="card-value" style="font-size:20px;">${formatPHP(u.total_invested)}</div></div>
-        <div class="card card-sm"><div class="card-title">Joined</div><div class="card-value" style="font-size:14px; margin-top:4px;">${formatDate(u.created_at)}</div></div>
-      `;
-
-      // Toggle button
-      const toggleBtn = document.getElementById('toggle-active-btn');
-      toggleBtn.textContent = u.is_active ? 'Deactivate User' : 'Activate User';
-      toggleBtn.className = u.is_active ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
-
-      // Transactions
-      document.getElementById('modal-tx-tbody').innerHTML = transactions.length
-        ? transactions.map(t => `<tr>
-            <td>${formatDate(t.created_at)}</td>
-            <td><span class="badge badge-${t.type}">${t.type.replace('_',' ').toUpperCase()}</span></td>
-            <td class="primary">${formatPHP(t.amount)}</td>
-            <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
-          </tr>`).join('')
-        : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No transactions</td></tr>';
-
-      // Trades
-      document.getElementById('modal-trades-tbody').innerHTML = trades.length
-        ? trades.map(t => `<tr>
-            <td>${formatDate(t.trade_open_at)}</td>
-            <td>${t.game_providers?.name || '—'}</td>
-            <td><span class="badge badge-${t.direction}">${t.direction.toUpperCase()}</span></td>
-            <td>${formatPHP(t.stake)}</td>
-            <td><span class="badge badge-${t.result}">${t.result.toUpperCase()}</span></td>
-            <td style="color:${t.result==='win'?'var(--accent-green)':'var(--text-muted)'};">${t.result==='win'?'+'+formatPHP(t.payout_amount):'—'}</td>
-          </tr>`).join('')
-        : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No trades</td></tr>';
-
-      document.getElementById('user-modal').classList.remove('hidden');
-    }
-
-    function closeUserModal() {
-      document.getElementById('user-modal').classList.add('hidden');
-      selectedUserId = null;
-    }
-
-    async function adjustBalance() {
-      if (!selectedUserId) return;
-      const amount = parseFloat(document.getElementById('adjust-amount').value);
-      const note = document.getElementById('adjust-note').value.trim();
-
-      if (isNaN(amount)) { showToast('Error', 'Enter a valid amount', 'error'); return; }
-
-      const res = await apiFetch(`/api/admin/users/${selectedUserId}/adjust-balance`, 'POST', { amount, note });
-      if (res && res.ok) {
-        showToast('Balance Updated', `New balance: ${formatPHP(res.data.new_balance)}`, 'success');
-        document.getElementById('adjust-amount').value = '';
-        document.getElementById('adjust-note').value = '';
-        openUserModal(selectedUserId);
-        loadUsers();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to adjust', 'error');
-      }
-    }
-
-    async function toggleUserActive() {
-      if (!selectedUserId) return;
-      const res = await apiFetch(`/api/admin/users/${selectedUserId}/toggle-active`, 'POST');
-      if (res && res.ok) {
-        showToast('Updated', `User is now ${res.data.is_active ? 'active' : 'inactive'}`, 'success');
-        openUserModal(selectedUserId);
-        loadUsers();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to update', 'error');
-      }
-    }
-
-    loadUsers();
-  </script>
+async function toggleActive(id,cur){
+  const r=await apiFetch('/api/admin/members/'+id,{method:'PATCH',body:JSON.stringify({is_active:!cur})});
+  if(r&&r.ok){showToast(!cur?'Member activated':'Member deactivated');loadMembers();}
+}
+loadMembers();
+</script>
 </body>
 </html>

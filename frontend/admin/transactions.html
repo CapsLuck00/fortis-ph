@@ -1,209 +1,204 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Transactions — FortisPH Admin</title>
-  <link rel="stylesheet" href="/assets/css/main.css" />
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Transactions — FortisPH Admin</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.badge-admin{font-size:9px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:3px;font-weight:700}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden}
+.ticker-item{padding:0 18px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap;gap:2px}
+.t-name{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.t-val{font-size:13px;font-weight:700}.t-val.green{color:var(--green)}.t-val.gold{color:var(--gold)}.t-val.red{color:var(--red)}.t-val.blue{color:var(--blue)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--red);background:var(--red-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(239,68,68,0.08);border-left-color:var(--red);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-role{font-size:11px;color:var(--red);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.page-title{font-size:20px;font-weight:800;color:var(--text)}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s}
+.filter-btn:hover,.filter-btn.active{background:var(--blue-dim);color:var(--blue);border-color:var(--blue)}
+input[type=text],input[type=number],select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:13px;outline:none;transition:border .15s}
+input[type=text]:focus,select:focus{border-color:var(--blue)}
+input[type=text]::placeholder{color:var(--muted)}
+.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{opacity:.85}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)}.btn-gold:hover{background:var(--gold);color:#000}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}
+.badge.active,.badge.online{background:var(--green-dim);color:var(--green)}.badge.inactive{background:var(--border);color:var(--muted2)}
+.badge.deposit{background:var(--green-dim);color:var(--green)}.badge.withdrawal{background:var(--blue-dim);color:var(--blue)}
+.badge.interest{background:var(--gold-dim);color:var(--gold)}.badge.trade_win{background:var(--green-dim);color:var(--green)}.badge.trade_loss{background:var(--red-dim);color:var(--red)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:460px;max-width:95vw;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{cursor:pointer;color:var(--muted);font-size:20px;line-height:1}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:4px}
+.form-group{margin-bottom:14px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}</style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Admin Panel</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin/index.html"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/chart.html"><span class="nav-icon">📈</span> Chart Control</a>
-        <a href="/admin/users.html"><span class="nav-icon">👥</span> Users</a>
-        <a href="/admin/transactions.html" class="active"><span class="nav-icon">💳</span> Transactions</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">Transaction Management</div>
-        <div class="topbar-right">
-          <button class="btn btn-ghost btn-sm" onclick="loadTransactions()">🔄 Refresh</button>
-        </div>
-      </header>
-
-      <div class="page-body">
-        <!-- Type Tabs -->
-        <div class="tabs">
-          <button class="tab-btn active" data-type="deposit">Deposits</button>
-          <button class="tab-btn" data-type="withdrawal">Withdrawals</button>
-        </div>
-
-        <!-- Status Filter -->
-        <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
-          <button class="btn btn-ghost btn-sm filter-btn active" data-status="">All</button>
-          <button class="btn btn-ghost btn-sm filter-btn" data-status="pending">Pending</button>
-          <button class="btn btn-ghost btn-sm filter-btn" data-status="approved">Approved</button>
-          <button class="btn btn-ghost btn-sm filter-btn" data-status="rejected">Rejected</button>
-        </div>
-
-        <!-- Transactions Table -->
-        <div class="card">
-          <div class="table-wrap">
-            <table class="table">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>User</th>
-                  <th>Amount</th>
-                  <th>Details / Reference</th>
-                  <th>Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="tx-tbody">
-                <tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">Loading...</td></tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </main>
+<div id="ticker-bar">
+  <div class="ticker-brand">⚡ FortisPH <span class="badge-admin">ADMIN</span></div>
+  <div class="ticker-items" id="ticker-items">
+    <div class="ticker-item"><div class="t-name">Members</div><div class="t-val blue" id="tk-members">—</div></div>
+    <div class="ticker-item"><div class="t-name">Platform Balance</div><div class="t-val green" id="tk-balance">—</div></div>
+    <div class="ticker-item"><div class="t-name">Pending Deposits</div><div class="t-val gold" id="tk-deposits">—</div></div>
+    <div class="ticker-item"><div class="t-name">Pending Withdrawals</div><div class="t-val red" id="tk-withdrawals">—</div></div>
   </div>
-
-  <!-- Reject Modal -->
-  <div class="modal-overlay hidden" id="reject-modal">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">Reject Transaction</div>
-        <button class="modal-close" onclick="closeRejectModal()">×</button>
+  <div class="ticker-user">
+    <div><div class="u-name" id="admin-name">Admin</div><div class="u-badge">ADMIN</div></div>
+    <div class="ticker-avatar" id="admin-avatar">A</div>
+  </div>
+</div>
+<div id="app">
+  
+  <aside id="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <a href="/admin/index.html" class="nav-item "><span class="nav-icon">📊</span>Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Members</div>
+      <a href="/admin/users.html" class="nav-item "><span class="nav-icon">👥</span>Members</a>
+      <a href="/admin/transactions.html?type=deposit" class="nav-item "><span class="nav-icon">💳</span>Deposits</a>
+      <a href="/admin/transactions.html?type=withdrawal" class="nav-item "><span class="nav-icon">🏧</span>Withdrawals</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Platform</div>
+      <a href="/admin/transactions.html" class="nav-item active"><span class="nav-icon">📋</span>Transactions</a>
+      <a href="/admin/chart.html" class="nav-item "><span class="nav-icon">📈</span>Chart Control</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-card">
+        <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">A</div>
+        <div><div class="s-name" id="sb-name">Admin</div><div class="s-role">Administrator</div></div>
       </div>
-      <div class="modal-body">
-        <div class="alert alert-warning" style="margin-bottom:16px;">This will mark the transaction as rejected. Funds are NOT automatically refunded for withdrawals — handle manually if needed.</div>
-        <div class="form-group">
-          <label>Reason for Rejection</label>
-          <input type="text" id="reject-reason" class="form-control" placeholder="e.g. Invalid reference, insufficient proof" />
-        </div>
+      <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">🚪</span>Logout</a>
+    </div>
+  </aside>
+  <div id="main">
+    <div>
+      <div class="page-hdr"><span class="page-title">📋 Transactions</span><button class="btn btn-blue" onclick="loadTxns()">↺ Refresh</button></div>
+      <div class="page-sub">Approve deposits · Process withdrawals · Review all transactions.</div>
+      <div class="filters" style="margin-bottom:14px">
+        <select id="f-type" onchange="loadTxns()" style="width:140px">
+          <option value="">All Types</option>
+          <option value="deposit">Deposits</option>
+          <option value="withdrawal">Withdrawals</option>
+          <option value="interest">Interest</option>
+        </select>
+        <select id="f-status" onchange="loadTxns()" style="width:140px">
+          <option value="">All Status</option>
+          <option value="pending">Pending</option>
+          <option value="approved">Approved</option>
+          <option value="rejected">Rejected</option>
+        </select>
+        <button class="btn btn-gold" onclick="setQuick('deposit','pending')">⏳ Pending Deposits</button>
+        <button class="btn btn-red" onclick="setQuick('withdrawal','pending')">🏧 Pending Withdrawals</button>
       </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeRejectModal()">Cancel</button>
-        <button class="btn btn-danger" onclick="confirmReject()">Confirm Reject</button>
+    </div>
+    <div class="card" style="padding:0">
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Member</th><th>Type</th><th>Amount</th><th>Method</th><th>Reference</th><th>Status</th><th>Note</th><th>Date</th><th>Actions</th></tr></thead>
+          <tbody id="txns-tbody"><tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">Loading…</td></tr></tbody>
+        </table>
       </div>
     </div>
   </div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotAdmin();
+const user=getUser();
+if(user){const i=user.username?.charAt(0).toUpperCase()||'A';document.getElementById('admin-name').textContent=user.username;document.getElementById('admin-avatar').textContent=i;const sb=document.getElementById('sb-name');if(sb)sb.textContent=user.username;const sba=document.getElementById('sb-avatar');if(sba)sba.textContent=i;}
+async function loadTicker(){const r=await apiFetch('/api/admin/stats');if(!r||!r.ok)return;const d=r.data.data;const fmt=v=>'₱'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById('tk-members').textContent=d.totalMembers||0;document.getElementById('tk-balance').textContent=fmt(d.totalBalance);document.getElementById('tk-deposits').textContent=d.pendingDeposits||0;document.getElementById('tk-withdrawals').textContent=d.pendingWithdrawals||0;}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();setInterval(loadTicker,30000);
+function setQuick(type,status){
+  document.getElementById('f-type').value=type;
+  document.getElementById('f-status').value=status;
+  loadTxns();
+}
 
-  <div id="toast-container"></div>
-  <script src="/assets/js/api.js"></script>
-  <script>
-    if (!redirectIfNotAdmin()) throw new Error('Not admin');
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
+async function loadTxns(){
+  const type=document.getElementById('f-type').value;
+  const status=document.getElementById('f-status').value;
+  let url='/api/admin/transactions?';
+  if(type)url+='type='+type+'&';
+  if(status)url+='status='+status+'&';
+  const r=await apiFetch(url);
+  if(!r||!r.ok)return;
+  const txns=r.data.data?.transactions||[];
+  const tbody=document.getElementById('txns-tbody');
+  if(!txns.length){tbody.innerHTML='<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px">No transactions found</td></tr>';return;}
+  tbody.innerHTML=txns.map(t=>{
+    const isPending=t.status==='pending';
+    const isIncome=['deposit','interest','trade_win'].includes(t.type);
+    return `<tr>
+      <td><strong>${t.members?.username||'—'}</strong><br><span style="font-size:11px;color:var(--muted)">${t.members?.email||''}</span></td>
+      <td><span class="badge ${t.type}">${t.type.replace('_',' ')}</span></td>
+      <td style="font-weight:700;color:${isIncome?'var(--green)':'var(--red)'}">₱${parseFloat(t.amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+      <td style="color:var(--muted2);font-size:12px">${t.payment_method||'—'}</td>
+      <td style="color:var(--muted);font-size:11px">${t.reference_number||t.account_number||'—'}</td>
+      <td><span class="badge ${t.status}">${t.status}</span></td>
+      <td style="color:var(--muted);font-size:11px;max-width:120px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${t.admin_note||'—'}</td>
+      <td style="color:var(--muted);font-size:12px;white-space:nowrap">${new Date(t.created_at).toLocaleString('en-PH',{dateStyle:'short',timeStyle:'short'})}</td>
+      <td style="white-space:nowrap">
+        ${isPending?`<button class="btn btn-green" style="font-size:11px;margin-right:4px" onclick="act('${t.id}','approved')">✓ Approve</button><button class="btn btn-red" style="font-size:11px" onclick="act('${t.id}','rejected')">✗ Reject</button>`:'<span style="color:var(--muted);font-size:12px">Done</span>'}
+      </td>
+    </tr>`;
+  }).join('');
+}
 
-    let currentType = 'deposit';
-    let currentStatus = '';
-    let rejectingId = null;
+async function act(id,status){
+  const note=status==='rejected'?prompt('Rejection reason (optional):',''):'';
+  const body={status};
+  if(note)body.admin_note=note;
+  const r=await apiFetch('/api/admin/transactions/'+id,{method:'PATCH',body:JSON.stringify(body)});
+  if(r&&r.ok){
+    showToast(status==='approved'?'✅ Approved! Balance updated.':'❌ Rejected.');
+    loadTxns();loadTicker();
+  }else showToast('Error processing transaction','err');
+}
 
-    // Type tabs
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentType = btn.dataset.type;
-        loadTransactions();
-      });
-    });
-
-    // Status filter buttons
-    document.querySelectorAll('.filter-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        currentStatus = btn.dataset.status;
-        loadTransactions();
-      });
-    });
-
-    async function loadTransactions() {
-      let url = `/api/admin/transactions?type=${currentType}`;
-      if (currentStatus) url += `&status=${currentStatus}`;
-
-      const res = await apiFetch(url);
-      const tbody = document.getElementById('tx-tbody');
-
-      if (!res || !res.ok) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">Failed to load</td></tr>';
-        return;
-      }
-
-      const txs = res.data.transactions || [];
-      if (!txs.length) {
-        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);padding:32px;">No transactions found</td></tr>';
-        return;
-      }
-
-      tbody.innerHTML = txs.map(t => `
-        <tr>
-          <td style="font-size:12px; white-space:nowrap;">${formatDate(t.created_at)}</td>
-          <td>
-            <div class="primary" style="font-weight:600;">${t.users?.username || '—'}</div>
-            <div style="font-size:11px; color:var(--text-muted);">${t.users?.email || ''}</div>
-          </td>
-          <td class="primary" style="font-size:16px; font-weight:700;">${formatPHP(t.amount)}</td>
-          <td style="font-size:12px; color:var(--text-muted); max-width:200px; word-break:break-all;">
-            ${t.reference_code ? `<div><strong style="color:var(--text-secondary)">Ref:</strong> ${t.reference_code}</div>` : ''}
-            ${t.notes ? `<div style="margin-top:2px;">${t.notes.substring(0, 80)}${t.notes.length > 80 ? '...' : ''}</div>` : ''}
-          </td>
-          <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
-          <td>
-            ${t.status === 'pending' ? `
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓ Approve</button>
-                <button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗ Reject</button>
-              </div>
-            ` : '<span style="color:var(--text-muted);font-size:13px;">Processed</span>'}
-          </td>
-        </tr>
-      `).join('');
-    }
-
-    async function approveTx(id) {
-      const res = await apiFetch(`/api/admin/transactions/${id}/approve`, 'POST');
-      if (res && res.ok) {
-        showToast('✅ Approved', 'Transaction approved. Balance credited.', 'success');
-        loadTransactions();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to approve', 'error');
-      }
-    }
-
-    function openRejectModal(id) {
-      rejectingId = id;
-      document.getElementById('reject-reason').value = '';
-      document.getElementById('reject-modal').classList.remove('hidden');
-    }
-
-    function closeRejectModal() {
-      rejectingId = null;
-      document.getElementById('reject-modal').classList.add('hidden');
-    }
-
-    async function confirmReject() {
-      if (!rejectingId) return;
-      const reason = document.getElementById('reject-reason').value.trim();
-
-      const res = await apiFetch(`/api/admin/transactions/${rejectingId}/reject`, 'POST', { reason });
-      if (res && res.ok) {
-        showToast('Rejected', 'Transaction marked as rejected', 'info');
-        closeRejectModal();
-        loadTransactions();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to reject', 'error');
-      }
-    }
-
-    loadTransactions();
-    setInterval(loadTransactions, 30000);
-  </script>
+// Auto-set filter from URL params
+const params=new URLSearchParams(location.search);
+if(params.get('type'))document.getElementById('f-type').value=params.get('type');
+if(params.get('status'))document.getElementById('f-status').value=params.get('status');
+loadTxns();
+</script>
 </body>
 </html>

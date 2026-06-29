@@ -1,192 +1,180 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Deposit — FortisPH</title>
-  <link rel="stylesheet" href="/assets/css/main.css" />
-  <style>
-    .payment-instructions { background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-top: 16px; font-size: 14px; }
-    .payment-instructions h4 { color: var(--accent-gold); margin-bottom: 10px; }
-    .payment-instructions p { color: var(--text-secondary); margin-bottom: 6px; }
-    .payment-instructions .account-num { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: 1px; margin: 4px 0 10px; }
-    .success-card { text-align: center; padding: 40px 24px; }
-    .success-icon { font-size: 56px; margin-bottom: 16px; }
-    .success-ref { background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 16px; font-family: monospace; font-size: 16px; color: var(--accent-gold); letter-spacing: 1px; }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Deposit &#8212; FortisPH</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden}
+.ticker-item{padding:0 16px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap}
+.t-name{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}.t-val{font-size:12px;font-weight:700}.t-chg{font-size:11px;font-weight:600}.t-chg.up{color:var(--green)}.t-chg.dn{color:var(--red)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(59,130,246,0.1);border-left-color:var(--blue);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.nb-new{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:auto;background:var(--blue);color:#fff}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-bal{font-size:11px;color:var(--green);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-title{font-size:20px;font-weight:800;margin-bottom:2px}.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}.btn-blue:disabled{opacity:.5;cursor:not-allowed}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+input,select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;transition:border .15s}
+input:focus,select:focus{border-color:var(--blue)}input::placeholder{color:var(--muted)}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:5px}
+.form-group{margin-bottom:14px}
+.method-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:18px}
+.method-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 10px;text-align:center;cursor:pointer;transition:all .2s}
+.method-card:hover{border-color:var(--blue)}
+.method-card.selected{border-color:var(--blue);background:var(--blue-dim)}
+.method-icon{font-size:24px;margin-bottom:6px}.method-name{font-size:12px;font-weight:600}
+.qamt-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.qamt{padding:6px 14px;background:var(--bg2);border:1px solid var(--border);border-radius:6px;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s}
+.qamt:hover{border-color:var(--blue);color:var(--blue)}
+.info-box{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--border2);font-size:13px}
+.info-row:last-child{border-bottom:none}
+.info-label{color:var(--muted2)}.info-val{font-weight:600}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:16px}</style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Member Portal</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/dashboard/deposit.html" class="active"><span class="nav-icon">💰</span> Deposit</a>
-        <a href="/dashboard/withdraw.html"><span class="nav-icon">💸</span> Withdraw</a>
-        <a href="/dashboard/history.html"><span class="nav-icon">📜</span> History</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">Deposit Funds</div>
-      </header>
-
-      <div class="page-body">
-        <div class="grid-2" style="max-width: 900px;">
-          <!-- Deposit Form -->
-          <div class="card" id="deposit-form-card">
-            <h3 class="section-title">New Deposit Request</h3>
-
-            <div id="form-error" class="alert alert-error" style="display:none;"></div>
-
-            <form id="deposit-form">
-              <div class="form-group">
-                <label for="amount">Amount (₱)</label>
-                <input type="number" id="amount" class="form-control" placeholder="Enter deposit amount" min="100" step="50" required />
-              </div>
-
-              <div class="form-group">
-                <label for="payment-method">Payment Method</label>
-                <select id="payment-method" class="form-control" required>
-                  <option value="">Select payment method</option>
-                  <option value="GCash">GCash</option>
-                  <option value="Maya">Maya</option>
-                  <option value="Online Banking">Online Banking (BDO)</option>
-                </select>
-              </div>
-
-              <div class="form-group">
-                <label for="account-name">Your Account Name</label>
-                <input type="text" id="account-name" class="form-control" placeholder="Name on your GCash/Maya/Bank" required />
-              </div>
-
-              <div class="form-group">
-                <label for="reference-code">Reference / Transaction Number</label>
-                <input type="text" id="reference-code" class="form-control" placeholder="e.g. 1234567890" required />
-              </div>
-
-              <!-- Payment Instructions -->
-              <div id="payment-instructions" class="payment-instructions" style="display:none;"></div>
-
-              <button type="submit" class="btn btn-primary btn-full" id="deposit-btn" style="margin-top: 16px;">
-                💰 Submit Deposit Request
-              </button>
-            </form>
-          </div>
-
-          <!-- Info Card -->
-          <div>
-            <div class="card" style="margin-bottom: 16px;">
-              <h4 class="section-title">How Deposits Work</h4>
-              <ol style="padding-left: 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.9;">
-                <li>Select your payment method above</li>
-                <li>Send the amount to our account below</li>
-                <li>Enter the reference number from your transaction</li>
-                <li>Admin will approve within 5–30 minutes</li>
-                <li>Balance is credited instantly upon approval</li>
-              </ol>
-            </div>
-            <div class="card">
-              <h4 class="section-title">Minimum Deposit</h4>
-              <div class="card-value gold">₱100</div>
-              <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">Minimum deposit per transaction</p>
-            </div>
+<div id="ticker-bar">
+  <div class="ticker-brand">&#9889; FortisPH</div>
+  <div class="ticker-items" id="ticker-items"><div class="ticker-item" style="color:var(--muted);font-size:12px">Loading...</div></div>
+  <div class="ticker-user"><div><div class="u-name" id="tk-name">&#8212;</div><div class="u-badge">MEMBER</div></div><div class="ticker-avatar" id="tk-avatar">U</div></div>
+</div>
+<div id="app">
+<aside id="sidebar"><div class="nav-section"><div class="nav-label">Overview</div><a href="/dashboard/index.html" class="nav-item"><span class="nav-icon">&#128202;</span>Dashboard</a><a href="/dashboard/wallet.html" class="nav-item"><span class="nav-icon">&#128220;</span>Wallet</a><a href="/dashboard/exchange.html" class="nav-item"><span class="nav-icon">&#128260;</span>Exchange</a><a href="/dashboard/markets.html" class="nav-item"><span class="nav-icon">&#127758;</span>Markets</a></div><div class="nav-section"><div class="nav-label">Trading</div><a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">&#9889;</span>Trade</a><a href="/dashboard/copy-trading.html" class="nav-item"><span class="nav-icon">&#128101;</span>Copy Trading<span class="nb-new">NEW</span></a><a href="/dashboard/analytics.html" class="nav-item"><span class="nav-icon">&#128202;</span>Analytics</a></div><div class="nav-section"><div class="nav-label">Account</div><a href="/dashboard/deposit.html" class="nav-item active"><span class="nav-icon">&#128179;</span>Deposit</a><a href="/dashboard/withdraw.html" class="nav-item"><span class="nav-icon">&#129319;</span>Withdraw</a><a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#9881;&#65039;</span>Settings</a><a href="/dashboard/education.html" class="nav-item"><span class="nav-icon">&#128218;</span>Education</a></div><div class="sidebar-footer">
+    <div class="sidebar-user-card">
+      <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
+      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">&#8369;&#8212;</div></div>
+    </div>
+    <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">&#128682;</span>Logout</a>
+  </div></aside>
+<div id="main">
+  <div><div class="page-title">&#128179; Deposit Funds</div><div class="page-sub">Add funds to your trading account. 0% deposit fee. Credited within 5 minutes after admin approval.</div></div>
+  <div class="two-col">
+    <div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Select Payment Method</div>
+        <div class="method-grid">
+          <div class="method-card selected" onclick="selectMethod('gcash',this)"><div class="method-icon">&#128155;</div><div class="method-name">GCash</div></div>
+          <div class="method-card" onclick="selectMethod('maya',this)"><div class="method-icon">&#128153;</div><div class="method-name">Maya</div></div>
+          <div class="method-card" onclick="selectMethod('bank',this)"><div class="method-icon">&#127981;</div><div class="method-name">Bank</div></div>
+          <div class="method-card" onclick="selectMethod('usdt',this)"><div class="method-icon">&#9881;</div><div class="method-name">USDT</div></div>
+        </div>
+        <div class="info-box" id="method-details">
+          <div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; GCash</div>
+          <div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Official</span></div>
+          <div class="info-row"><span class="info-label">GCash Number</span><span class="info-val" style="color:var(--blue)">0917-123-4567</span></div>
+          <div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>
+        </div>
+        <div class="form-group">
+          <label>Amount (PHP)</label>
+          <input type="number" id="dep-amount" placeholder="e.g. 500" min="100" oninput="updateDepFee()">
+          <div class="qamt-row">
+            <span class="qamt" onclick="setAmt(500)">&#8369;500</span>
+            <span class="qamt" onclick="setAmt(1000)">&#8369;1,000</span>
+            <span class="qamt" onclick="setAmt(2500)">&#8369;2,500</span>
+            <span class="qamt" onclick="setAmt(5000)">&#8369;5,000</span>
+            <span class="qamt" onclick="setAmt(10000)">&#8369;10,000</span>
           </div>
         </div>
-
-        <!-- Success State (hidden by default) -->
-        <div class="card" id="success-card" style="display:none; max-width: 520px; margin: 0 auto;">
-          <div class="success-card">
-            <div class="success-icon">✅</div>
-            <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">Deposit Submitted!</h3>
-            <p style="color: var(--text-muted);">Your deposit request is now pending admin approval. You'll be notified once approved.</p>
-            <div class="success-ref" id="success-ref"></div>
-            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
-              <a href="/dashboard/index.html" class="btn btn-primary">Go to Dashboard</a>
-              <button class="btn btn-ghost" onclick="resetForm()">New Deposit</button>
-            </div>
-          </div>
+        <div class="form-group"><label>Reference / Transaction Number</label><input type="text" id="dep-ref" placeholder="e.g. 12345678901 or TXN-XXXXXX"></div>
+        <div class="info-box" style="margin-bottom:14px">
+          <div class="info-row"><span class="info-label">Deposit Amount</span><span class="info-val" id="dep-amt-show">&#8369;0.00</span></div>
+          <div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">&#8369;0.00 (FREE)</span></div>
+          <div class="info-row"><span class="info-label">You will receive</span><span class="info-val" style="color:var(--green);font-size:15px" id="dep-recv">&#8369;0.00</span></div>
+        </div>
+        <button class="btn btn-blue" style="width:100%;padding:12px" onclick="submitDeposit()" id="dep-btn">&#128179; Submit Deposit Request</button>
+      </div>
+    </div>
+    <div>
+      <div style="background:var(--blue-dim);border:1px solid var(--blue);border-radius:10px;padding:16px;margin-bottom:16px">
+        <div style="font-size:12px;font-weight:700;color:var(--blue);text-transform:uppercase;letter-spacing:.5px;margin-bottom:10px">&#8505; Your Balance</div>
+        <div style="font-size:32px;font-weight:800;letter-spacing:-1px" id="bal-val">&#8369;&#8212;</div>
+        <div style="font-size:11px;color:var(--muted2);margin-top:4px">Available trading balance</div>
+      </div>
+      <div class="card">
+        <div style="font-size:13px;font-weight:700;margin-bottom:14px">Deposit History</div>
+        <div style="overflow-x:auto">
+          <table><thead><tr><th>Date</th><th>Amount</th><th>Method</th><th>Status</th></tr></thead>
+          <tbody id="dep-history"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Loading...</td></tr></tbody>
+          </table>
         </div>
       </div>
-    </main>
+    </div>
   </div>
-
-  <div id="toast-container"></div>
-  <script src="/assets/js/api.js"></script>
-  <script>
-    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
-
-    const paymentDetails = {
-      'GCash': { icon: '📱', lines: ['Send to GCash number:', '0917 234 5678', 'Account Name: FortisPH'] },
-      'Maya': { icon: '💳', lines: ['Send to Maya number:', '0908 765 4321', 'Account Name: FortisPH'] },
-      'Online Banking': { icon: '🏦', lines: ['BDO Savings Account:', '0012 3456 7890', 'Account Name: FortisPH Corp'] }
-    };
-
-    document.getElementById('payment-method').addEventListener('change', function() {
-      const method = this.value;
-      const instructionsEl = document.getElementById('payment-instructions');
-      if (!method) { instructionsEl.style.display = 'none'; return; }
-
-      const details = paymentDetails[method];
-      instructionsEl.style.display = 'block';
-      instructionsEl.innerHTML = `
-        <h4>${details.icon} Send to this ${method} account:</h4>
-        ${details.lines.map((l, i) => i === 1
-          ? `<div class="account-num">${l}</div>`
-          : `<p>${l}</p>`
-        ).join('')}
-        <p style="margin-top: 10px; color: var(--accent-gold);">⚠️ Screenshot your transaction and save the reference number before submitting.</p>
-      `;
-    });
-
-    document.getElementById('deposit-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const errorEl = document.getElementById('form-error');
-      errorEl.style.display = 'none';
-
-      const amount = parseFloat(document.getElementById('amount').value);
-      const payment_method = document.getElementById('payment-method').value;
-      const account_name = document.getElementById('account-name').value.trim();
-      const reference_code = document.getElementById('reference-code').value.trim();
-
-      if (amount < 100) { errorEl.textContent = 'Minimum deposit is ₱100'; errorEl.style.display = 'flex'; return; }
-
-      const btn = document.getElementById('deposit-btn');
-      btn.disabled = true;
-      btn.textContent = 'Submitting...';
-
-      const res = await apiFetch('/api/member/deposit', 'POST', { amount, payment_method, account_name, reference_code });
-
-      if (res && res.ok) {
-        document.getElementById('deposit-form-card').style.display = 'none';
-        document.getElementById('success-card').style.display = 'block';
-        document.getElementById('success-ref').textContent = 'Reference: ' + res.data.reference;
-      } else {
-        errorEl.textContent = res?.data?.error || 'Submission failed. Try again.';
-        errorEl.style.display = 'flex';
-        btn.disabled = false;
-        btn.textContent = '💰 Submit Deposit Request';
-      }
-    });
-
-    function resetForm() {
-      document.getElementById('deposit-form').reset();
-      document.getElementById('payment-instructions').style.display = 'none';
-      document.getElementById('success-card').style.display = 'none';
-      document.getElementById('deposit-form-card').style.display = 'block';
-      document.getElementById('deposit-btn').disabled = false;
-      document.getElementById('deposit-btn').textContent = '💰 Submit Deposit Request';
-    }
-  </script>
+</div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotLoggedIn();
+const _u=getUser();
+if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">&#8369;'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
+async function loadBalMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});const bv=document.getElementById('bal-val');if(bv)bv.textContent='&#8369;'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();loadBalMini();setInterval(loadTicker,8000);
+const methodDetails={
+  gcash:{label:'GCash',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; GCash</div><div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Official</span></div><div class="info-row"><span class="info-label">GCash Number</span><span class="info-val" style="color:var(--blue)">0917-123-4567</span></div><div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>'},
+  maya:{label:'Maya',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; Maya</div><div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Official</span></div><div class="info-row"><span class="info-label">Maya Number</span><span class="info-val" style="color:var(--blue)">0927-987-6543</span></div><div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>'},
+  bank:{label:'Bank Transfer',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; Bank Transfer</div><div class="info-row"><span class="info-label">Bank</span><span class="info-val">BDO / BPI / UnionBank</span></div><div class="info-row"><span class="info-label">Account Name</span><span class="info-val">FortisPH Inc</span></div><div class="info-row"><span class="info-label">Account No.</span><span class="info-val" style="color:var(--blue)">1234-5678-9012</span></div><div class="info-row"><span class="info-label">Processing Fee</span><span class="info-val" style="color:var(--green)">FREE</span></div>'},
+  usdt:{label:'USDT (TRC-20)',details:'<div style="font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Payment Details &#8212; USDT TRC-20</div><div class="info-row"><span class="info-label">Network</span><span class="info-val">TRON (TRC-20)</span></div><div class="info-row"><span class="info-label">Wallet Address</span><span class="info-val" style="color:var(--blue);font-size:11px;word-break:break-all">TXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx</span></div><div class="info-row"><span class="info-label">Rate</span><span class="info-val">1 USDT = &#8369;57.00</span></div>'}
+};
+let selMethod='gcash';
+function selectMethod(m,el){
+  document.querySelectorAll('.method-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected');selMethod=m;
+  document.getElementById('method-details').innerHTML=methodDetails[m].details;
+}
+function setAmt(v){document.getElementById('dep-amount').value=v;updateDepFee();}
+function updateDepFee(){const v=parseFloat(document.getElementById('dep-amount').value)||0;document.getElementById('dep-amt-show').textContent='&#8369;'+v.toLocaleString('en-PH',{minimumFractionDigits:2});document.getElementById('dep-recv').textContent='&#8369;'+v.toLocaleString('en-PH',{minimumFractionDigits:2});}
+async function submitDeposit(){
+  const amt=parseFloat(document.getElementById('dep-amount').value);
+  const ref=document.getElementById('dep-ref').value.trim();
+  if(!amt||amt<100){showToast('Minimum deposit is PHP 100',true);return;}
+  if(!ref){showToast('Reference number is required',true);return;}
+  const btn=document.getElementById('dep-btn');btn.disabled=true;btn.textContent='Submitting...';
+  const r=await apiFetch('/api/member/deposit','POST',{amount:amt,payment_method:selMethod,reference_number:ref});
+  btn.disabled=false;btn.innerHTML='&#128179; Submit Deposit Request';
+  if(r&&r.ok){showToast('Deposit submitted! Pending admin approval.');document.getElementById('dep-amount').value='';document.getElementById('dep-ref').value='';updateDepFee();loadHistory();}
+  else{showToast(r?.data?.message||'Deposit failed',true);}
+}
+async function loadHistory(){
+  const r=await apiFetch('/api/member/transactions?type=deposit');
+  const tbody=document.getElementById('dep-history');
+  const txns=r?.data?.data?.transactions||[];
+  if(!txns.length){tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:16px">No deposit history</td></tr>';return;}
+  tbody.innerHTML=txns.map(t=>{
+    const d=new Date(t.created_at).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'2-digit'});
+    const s=t.status;const sc=s==='approved'?'approved':s==='rejected'?'rejected':'pending';
+    return '<tr><td>'+d+'</td><td style="font-weight:600">&#8369;'+parseFloat(t.amount).toLocaleString('en-PH',{minimumFractionDigits:2})+'</td><td>'+t.payment_method+'</td><td><span class="badge '+sc+'">'+s+'</span></td></tr>';
+  }).join('');
+}
+loadHistory();
+</script>
 </body>
 </html>

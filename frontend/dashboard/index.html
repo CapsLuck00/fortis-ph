@@ -572,7 +572,7 @@ function startInterestTicker(balance, ratePerSec) {
 
 // ── PROVIDERS + TICKER ────────────────────────────────────
 async function loadProviders() {
-  const res = await apiFetch('/api/chart/providers');
+  const res = await apiFetch('/api/chart/');
   if (!res || !res.ok) return;
   providers = res.data.data?.providers || [];
 
@@ -586,7 +586,7 @@ async function loadProviders() {
   renderTickerBar();
   renderProviderTabs();
   renderTopProviders();
-  if (providers.length > 0) loadChart(providers[0].id);
+  if (providers.length > 0) loadChart(providers[0].slug);
 
   // Simulate live price ticks every 5s
   setInterval(() => {
@@ -650,11 +650,11 @@ function renderTopProviders() {
 async function switchProvider(idx) {
   activeProviderIdx = idx;
   document.querySelectorAll('.chart-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
-  if (providers[idx]) loadChart(providers[idx].id);
+  if (providers[idx]) loadChart(providers[idx].slug);
 }
 
-async function loadChart(providerId) {
-  const res = await apiFetch(`/api/chart/candles/${providerId}`);
+async function loadChart(slug) {
+  const res = await apiFetch(`/api/chart/${slug}/candles`);
   if (!res || !res.ok) return;
   const candles = res.data.data?.candles || [];
   renderChart(candles);
@@ -823,7 +823,7 @@ document.querySelectorAll('.period-tab').forEach(tab => {
   tab.addEventListener('click', () => {
     document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
     tab.classList.add('active');
-    if (providers[activeProviderIdx]) loadChart(providers[activeProviderIdx].id);
+    if (providers[activeProviderIdx]) loadChart(providers[activeProviderIdx].slug);
   });
 });
 

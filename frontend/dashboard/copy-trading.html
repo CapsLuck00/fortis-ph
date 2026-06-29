@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Copy Trading -- FortisPH</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden}
+.ticker-item{padding:0 16px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap}
+.t-name{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}
+.t-val{font-size:12px;font-weight:700}.t-chg{font-size:11px;font-weight:600}.t-chg.up{color:var(--green)}.t-chg.dn{color:var(--red)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(59,130,246,0.1);border-left-color:var(--blue);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.nav-badge{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:auto}
+.nb-new{background:var(--blue);color:#fff}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-bal{font-size:11px;color:var(--green);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-title{font-size:20px;font-weight:800;margin-bottom:2px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)}.btn-gold:hover{background:var(--gold);color:#000}
+.trader-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.trader-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;transition:border .2s}
+.trader-card:hover{border-color:var(--gold)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.active{background:var(--green-dim);color:var(--green)}
+.win-bar{height:4px;background:var(--border);border-radius:2px;margin:8px 0}
+.win-fill{height:100%;border-radius:2px;background:var(--green)}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+</style>
+</head>
+<body>
+<div id="ticker-bar">
+  <div class="ticker-brand">&#9889; FortisPH</div>
+  <div class="ticker-items" id="ticker-items"><div class="ticker-item" style="color:var(--muted);font-size:12px">Loading…</div></div>
+  <div class="ticker-user"><div><div class="u-name" id="tk-name">&#8212;</div><div class="u-badge">MEMBER</div></div><div class="ticker-avatar" id="tk-avatar">U</div></div>
+</div>
+<div id="app">
+<aside id="sidebar">
+  <div class="nav-section"><div class="nav-label">Overview</div>
+    <a href="/dashboard/index.html" class="nav-item"><span class="nav-icon">&#128202;</span>Dashboard</a>
+    <a href="/dashboard/wallet.html" class="nav-item"><span class="nav-icon">&#128220;</span>Wallet</a>
+    <a href="/dashboard/exchange.html" class="nav-item"><span class="nav-icon">&#128260;</span>Exchange</a>
+    <a href="/dashboard/markets.html" class="nav-item"><span class="nav-icon">&#127758;</span>Markets</a>
+  </div>
+  <div class="nav-section"><div class="nav-label">Trading</div>
+    <a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">&#9889;</span>Trade</a>
+    <a href="/dashboard/copy-trading.html" class="nav-item active"><span class="nav-icon">&#128101;</span>Copy Trading<span class="nav-badge nb-new">NEW</span></a>
+    <a href="/dashboard/analytics.html" class="nav-item"><span class="nav-icon">&#128202;</span>Analytics</a>
+  </div>
+  <div class="nav-section"><div class="nav-label">Account</div>
+    <a href="/dashboard/deposit.html" class="nav-item"><span class="nav-icon">&#128179;</span>Deposit</a>
+    <a href="/dashboard/withdraw.html" class="nav-item"><span class="nav-icon">&#129319;</span>Withdraw</a>
+    <a href="/dashboard/settings.html" class="nav-item"><span class="nav-icon">&#9881;&#65039;</span>Settings</a>
+    <a href="/dashboard/education.html" class="nav-item"><span class="nav-icon">&#128218;</span>Education</a>
+  </div>
+  <div class="sidebar-footer">
+    <div class="sidebar-user-card">
+      <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
+      <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">&#8369;&#8212;</div></div>
+    </div>
+    <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">&#128682;</span>Logout</a>
+  </div>
+</aside>
+<div id="main">
+  <div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">
+      <div class="page-title">&#128101; Copy Trading</div>
+      <span style="background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold);font-size:11px;padding:3px 8px;border-radius:4px;font-weight:600">BETA</span>
+    </div>
+    <div class="page-sub">Follow top traders and automatically mirror their winning trades.</div>
+  </div>
+  <div class="card" style="background:linear-gradient(135deg,rgba(59,130,246,0.1),rgba(245,158,11,0.08));border-color:rgba(59,130,246,0.3)">
+    <div style="display:flex;align-items:center;gap:16px">
+      <div style="font-size:52px">&#128640;</div>
+      <div>
+        <div style="font-size:16px;font-weight:700;margin-bottom:6px">Copy Trading Launching Soon</div>
+        <div style="font-size:13px;color:var(--muted2);max-width:500px">Follow the best traders on FortisPH and mirror their trades automatically. Set a stake multiplier and let the pros earn for you.</div>
+        <div style="display:flex;gap:8px;margin-top:12px">
+          <button class="btn btn-blue" onclick="showToast('You are on the waitlist!')">Notify Me</button>
+          <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px" onclick="showToast('Leaderboard coming soon!')">View Leaderboard</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="font-size:13px;font-weight:700;margin-bottom:10px">Top Traders (Preview)</div>
+  <div class="trader-grid">
+    <div class="trader-card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#e63946,var(--gold));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">TJ</div>
+        <div><div style="font-size:14px;font-weight:700">TraderJuan</div><div style="font-size:11px;color:var(--muted)">1,248 trades</div></div>
+        <span class="badge active" style="margin-left:auto">PRO</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--green);font-size:13px">82.4%</div><div style="color:var(--muted);font-size:10px">Win Rate</div></div>
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--gold);font-size:13px">1,248</div><div style="color:var(--muted);font-size:10px">Trades</div></div>
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--blue);font-size:13px">156%</div><div style="color:var(--muted);font-size:10px">ROI</div></div>
+      </div>
+      <div class="win-bar"><div class="win-fill" style="width:82.4%"></div></div>
+      <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="showToast('Copy Trading coming soon!')">Copy Trades</button>
+    </div>
+    <div class="trader-card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#023e8a,var(--blue));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">CM</div>
+        <div><div style="font-size:14px;font-weight:700">CryptoMaria</div><div style="font-size:11px;color:var(--muted)">987 trades</div></div>
+        <span class="badge active" style="margin-left:auto">PRO</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--green);font-size:13px">78.1%</div><div style="color:var(--muted);font-size:10px">Win Rate</div></div>
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--gold);font-size:13px">987</div><div style="color:var(--muted);font-size:10px">Trades</div></div>
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--blue);font-size:13px">124%</div><div style="color:var(--muted);font-size:10px">ROI</div></div>
+      </div>
+      <div class="win-bar"><div class="win-fill" style="width:78%"></div></div>
+      <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="showToast('Copy Trading coming soon!')">Copy Trades</button>
+    </div>
+    <div class="trader-card">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+        <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,#2d6a4f,var(--green));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#fff">PH</div>
+        <div><div style="font-size:14px;font-weight:700">PesoHunter</div><div style="font-size:11px;color:var(--muted)">834 trades</div></div>
+        <span class="badge active" style="margin-left:auto">PRO</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:8px">
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--green);font-size:13px">75.6%</div><div style="color:var(--muted);font-size:10px">Win Rate</div></div>
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--gold);font-size:13px">834</div><div style="color:var(--muted);font-size:10px">Trades</div></div>
+        <div style="text-align:center;padding:6px;background:var(--bg2);border-radius:6px"><div style="font-weight:700;color:var(--blue);font-size:13px">98%</div><div style="color:var(--muted);font-size:10px">ROI</div></div>
+      </div>
+      <div class="win-bar"><div class="win-fill" style="width:75%"></div></div>
+      <button class="btn btn-gold" style="width:100%;margin-top:8px" onclick="showToast('Copy Trading coming soon!')">Copy Trades</button>
+    </div>
+  </div>
+</div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>redirectIfNotLoggedIn();
+const _u=getUser();
+if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return `<div class="ticker-item"><span class="t-name">${p.name}</span><span class="t-val">\u20b1${parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})}</span><span class="t-chg ${ch>=0?'up':'dn'}">${chStr}</span></div>`;}).join('');}
+async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='\u20b1'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();loadDashMini();setInterval(loadTicker,8000);</script>
+</body>
+</html>

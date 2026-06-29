@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Trade — FortisPH</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden;gap:0}
+.ticker-item{padding:0 16px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap}
+.t-name{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}
+.t-val{font-size:12px;font-weight:700}
+.t-chg{font-size:11px;font-weight:600}.t-chg.up{color:var(--green)}.t-chg.dn{color:var(--red)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(59,130,246,0.1);border-left-color:var(--blue);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.nav-badge{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:auto}
+.nb-new{background:var(--blue);color:#fff}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-bal{font-size:11px;color:var(--green);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-title{font-size:20px;font-weight:800;margin-bottom:2px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{opacity:.85}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)}.btn-gold:hover{background:var(--gold);color:#000}
+input,select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;transition:border .15s}
+input:focus,select:focus{border-color:var(--blue)}
+input::placeholder{color:var(--muted)}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:5px}
+.form-group{margin-bottom:14px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}
+.badge.win,.badge.trade_win{background:var(--green-dim);color:var(--green)}.badge.loss,.badge.trade_loss{background:var(--red-dim);color:var(--red)}
+.tbl-wrap{overflow-x:auto}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes livePulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.trade-layout{display:grid;grid-template-columns:1fr 340px;gap:16px}
+.provider-tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px}
+.provider-tab{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s}
+.provider-tab.active{background:var(--blue-dim);color:var(--blue);border-color:var(--blue)}
+.chart-wrap{height:220px;margin-bottom:16px}
+.dir-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.dir-btn{padding:14px;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;border:2px solid transparent;transition:all .2s;text-align:center}
+.dir-btn.up{border-color:var(--green);background:var(--green-dim);color:var(--green)}
+.dir-btn.up.sel,.dir-btn.up:hover{background:var(--green);color:#000}
+.dir-btn.dn{border-color:var(--red);background:var(--red-dim);color:var(--red)}
+.dir-btn.dn.sel,.dir-btn.dn:hover{background:var(--red);color:#fff}
+.duration-chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px}
+.dur-chip{padding:6px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s}
+.dur-chip.active{background:var(--gold-dim);color:var(--gold);border-color:var(--gold)}
+.trade-result{padding:16px;border-radius:8px;text-align:center;display:none}
+.trade-result.show{display:block}
+.trade-result.win{background:var(--green-dim);border:1px solid var(--green)}
+.trade-result.loss{background:var(--red-dim);border:1px solid var(--red)}
+.live-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;animation:livePulse 1.5s infinite;margin-right:4px}
+.open-trade-row{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg2);border-radius:8px;margin-bottom:8px;border:1px solid var(--border)}
+.ot-name{font-size:12px;font-weight:700;flex:1}
+.ot-dir{font-size:11px;font-weight:700;padding:2px 8px;border-radius:4px}
+.ot-dir.up{background:var(--green-dim);color:var(--green)}.ot-dir.dn{background:var(--red-dim);color:var(--red)}
+.ot-timer{font-size:12px;color:var(--gold);font-weight:600;font-variant-numeric:tabular-nums}
+.ot-stake{font-size:13px;font-weight:700}
+</style>
+</head>
+<body>
+<div id="ticker-bar">
+  <div class="ticker-brand">⚡ FortisPH</div>
+  <div class="ticker-items" id="ticker-items"><div class="ticker-item" style="color:var(--muted);font-size:12px">Loading market data…</div></div>
+  <div class="ticker-user">
+    <div><div class="u-name" id="tk-name">—</div><div class="u-badge">MEMBER</div></div>
+    <div class="ticker-avatar" id="tk-avatar">U</div>
+  </div>
+</div>
+<div id="app">
+  <aside id="sidebar"><div class="nav-section"><div class="nav-label">Overview</div><a href="/dashboard/index.html" class="nav-item "><span class="nav-icon">📊</span>Dashboard</a><a href="/dashboard/wallet.html" class="nav-item "><span class="nav-icon">💼</span>Wallet</a><a href="/dashboard/exchange.html" class="nav-item "><span class="nav-icon">🔄</span>Exchange</a><a href="/dashboard/markets.html" class="nav-item "><span class="nav-icon">🌍</span>Markets</a></div><div class="nav-section"><div class="nav-label">Trading</div><a href="/dashboard/trade.html" class="nav-item active"><span class="nav-icon">⚡</span>Trade</a><a href="/dashboard/copy-trading.html" class="nav-item "><span class="nav-icon">👥</span>Copy Trading<span class="nav-badge nb-new">NEW</span></a><a href="/dashboard/analytics.html" class="nav-item "><span class="nav-icon">📊</span>Analytics</a></div><div class="nav-section"><div class="nav-label">Account</div><a href="/dashboard/deposit.html" class="nav-item "><span class="nav-icon">💳</span>Deposit</a><a href="/dashboard/withdraw.html" class="nav-item "><span class="nav-icon">🏧</span>Withdraw</a><a href="/dashboard/settings.html" class="nav-item "><span class="nav-icon">⚙️</span>Settings</a><a href="/dashboard/education.html" class="nav-item "><span class="nav-icon">📚</span>Education</a></div><div class="sidebar-footer">
+      <div class="sidebar-user-card">
+        <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
+        <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">₱—</div></div>
+      </div>
+      <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">🚪</span>Logout</a>
+    </div></aside>
+  <div id="main">
+    <div><div class="page-title">⚡ Trade</div><div class="page-sub">Predict provider price direction · Win up to 85% in 30 seconds.</div></div>
+    <div class="trade-layout">
+      <!-- LEFT: CHART + HISTORY -->
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="provider-tabs" id="provider-tabs">Loading providers…</div>
+          <div class="section-hdr">
+            <span class="section-title" id="chart-title">Loading…</span>
+            <div style="display:flex;align-items:center;gap:6px"><span class="live-dot"></span><span style="font-size:11px;color:var(--muted)">Live</span><span style="font-size:13px;font-weight:700;color:var(--green)" id="current-price">—</span></div>
+          </div>
+          <div class="chart-wrap"><canvas id="price-chart"></canvas></div>
+        </div>
+        <!-- TRADE HISTORY -->
+        <div class="card">
+          <div class="section-hdr"><span class="section-title">📜 Trade History</span><button class="btn btn-sm btn-ghost" onclick="loadHistory()">↺</button></div>
+          <div class="tbl-wrap">
+            <table>
+              <thead><tr><th>Provider</th><th>Direction</th><th>Stake</th><th>Result</th><th>P&L</th><th>Date</th></tr></thead>
+              <tbody id="history-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">Loading…</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <!-- RIGHT: TRADE PANEL -->
+      <div style="display:flex;flex-direction:column;gap:14px">
+        <div class="card">
+          <div class="section-hdr"><span class="section-title">🎯 Place Trade</span><span style="font-size:12px;color:var(--muted2)">Balance: <strong style="color:var(--green)" id="trade-bal">₱—</strong></span></div>
+          <!-- DIRECTION -->
+          <div style="font-size:12px;color:var(--muted2);margin-bottom:8px">Direction</div>
+          <div class="dir-btns">
+            <div class="dir-btn up" id="btn-up" onclick="setDir('up')">▲ UP</div>
+            <div class="dir-btn dn" id="btn-dn" onclick="setDir('down')">▼ DOWN</div>
+          </div>
+          <!-- DURATION -->
+          <div style="font-size:12px;color:var(--muted2);margin-bottom:8px">Duration</div>
+          <div class="duration-chips" id="duration-chips">
+            <div class="dur-chip active" data-v="30" onclick="setDur(this,30)">30s</div>
+            <div class="dur-chip" data-v="60" onclick="setDur(this,60)">1m</div>
+            <div class="dur-chip" data-v="120" onclick="setDur(this,120)">2m</div>
+            <div class="dur-chip" data-v="300" onclick="setDur(this,300)">5m</div>
+            <div class="dur-chip" data-v="600" onclick="setDur(this,600)">10m</div>
+          </div>
+          <!-- STAKE -->
+          <div class="form-group">
+            <label>Stake Amount (₱)</label>
+            <input type="number" id="stake-input" value="100" min="10" step="10" placeholder="Min ₱10">
+          </div>
+          <div style="display:flex;gap:6px;margin-bottom:14px">
+            <button class="btn btn-sm btn-ghost" onclick="setStake(100)">₱100</button>
+            <button class="btn btn-sm btn-ghost" onclick="setStake(500)">₱500</button>
+            <button class="btn btn-sm btn-ghost" onclick="setStake(1000)">₱1K</button>
+            <button class="btn btn-sm btn-ghost" onclick="setStake(5000)">₱5K</button>
+          </div>
+          <div style="background:var(--bg2);border-radius:8px;padding:12px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--muted2)">Stake</span><strong id="disp-stake">₱100</strong></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px"><span style="color:var(--muted2)">Win (85%)</span><strong style="color:var(--green)" id="disp-payout">₱185</strong></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px"><span style="color:var(--muted2)">Duration</span><strong style="color:var(--gold)" id="disp-dur">30s</strong></div>
+          </div>
+          <button class="btn btn-blue" id="place-btn" onclick="placeTrade()" style="width:100%;font-size:14px;padding:12px">⚡ Place Trade</button>
+          <div class="trade-result" id="trade-result"></div>
+        </div>
+        <!-- OPEN TRADES -->
+        <div class="card">
+          <div class="section-hdr"><span class="section-title">🔴 Live Trades</span><button class="btn btn-sm btn-ghost" onclick="loadOpenTrades()">↺</button></div>
+          <div id="open-trades-list"><div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">No open trades</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotLoggedIn();
+const _u=getUser();
+if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return `<div class="ticker-item"><span class="t-name">${p.name}</span><span class="t-val">₱${parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})}</span><span class="t-chg ${ch>=0?'up':'dn'}">${chStr}</span></div>`;}).join('');}
+async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();loadDashMini();setInterval(loadTicker,8000);
+let providers=[],currentProvider=null,selectedDir='up',selectedDur=30,priceChart=null;
+
+async function loadProviders(){
+  const r=await apiFetch('/api/chart/');
+  if(!r||!r.ok)return;
+  providers=r.data.data?.providers||[];
+  const tabs=document.getElementById('provider-tabs');
+  tabs.innerHTML=providers.filter(p=>p.is_active).map((p,i)=>`<button class="provider-tab ${i===0?'active':''}" onclick="selectProvider('${p.slug}','${p.name}',this)">${p.name}</button>`).join('');
+  if(providers.length)selectProvider(providers[0].slug,providers[0].name,tabs.querySelector('.provider-tab'));
+}
+
+async function selectProvider(slug,name,el){
+  document.querySelectorAll('.provider-tab').forEach(b=>b.classList.remove('active'));
+  if(el)el.classList.add('active');
+  currentProvider=providers.find(p=>p.slug===slug);
+  document.getElementById('chart-title').textContent=name+' — Price Chart';
+  if(currentProvider)document.getElementById('current-price').textContent='₱'+parseFloat(currentProvider.current_price||100).toFixed(2);
+  await loadChart(slug);
+}
+
+async function loadChart(slug){
+  const r=await apiFetch('/api/chart/'+slug+'/candles');
+  const ctx=document.getElementById('price-chart').getContext('2d');
+  if(priceChart)priceChart.destroy();
+  let candles=[];
+  if(r&&r.ok)candles=r.data.data?.candles||[];
+  if(!candles.length){for(let i=60;i>=0;i--)candles.push({close:100+(Math.random()-0.5)*10,time:new Date(Date.now()-i*3600000).toISOString()});}
+  const prices=candles.map(c=>parseFloat(c.close));
+  const grad=ctx.createLinearGradient(0,0,0,220);
+  const last=prices[prices.length-1];const first=prices[0];
+  const isUp=last>=first;
+  grad.addColorStop(0,isUp?'rgba(16,185,129,0.25)':'rgba(239,68,68,0.25)');
+  grad.addColorStop(1,'rgba(0,0,0,0)');
+  priceChart=new Chart(ctx,{type:'line',data:{labels:candles.map(c=>new Date(c.time).toLocaleTimeString('en-PH',{hour:'2-digit',minute:'2-digit'})),datasets:[{data:prices,borderColor:isUp?'#10b981':'#ef4444',borderWidth:1.5,backgroundColor:grad,fill:true,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7280',font:{size:9},maxTicksLimit:8},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#6b7280',font:{size:10},callback:v=>'₱'+v.toFixed(2)},grid:{color:'rgba(255,255,255,0.04)'}}}}});
+}
+
+function setDir(d){
+  selectedDir=d;
+  document.getElementById('btn-up').classList.toggle('sel',d==='up');
+  document.getElementById('btn-dn').classList.toggle('sel',d==='down');
+}
+
+function setDur(el,v){
+  selectedDur=v;
+  document.querySelectorAll('.dur-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const label=v<60?v+'s':v<3600?(v/60)+'m':'';
+  document.getElementById('disp-dur').textContent=label;
+}
+
+function setStake(v){document.getElementById('stake-input').value=v;updateDisp();}
+
+document.getElementById('stake-input').addEventListener('input',updateDisp);
+function updateDisp(){
+  const s=parseFloat(document.getElementById('stake-input').value)||0;
+  document.getElementById('disp-stake').textContent='₱'+s.toLocaleString('en-PH',{minimumFractionDigits:2});
+  document.getElementById('disp-payout').textContent='₱'+(s*1.85).toLocaleString('en-PH',{minimumFractionDigits:2});
+}
+
+async function placeTrade(){
+  if(!currentProvider){showToast('Select a provider first','err');return;}
+  const stake=parseFloat(document.getElementById('stake-input').value);
+  if(!stake||stake<10){showToast('Minimum stake is ₱10','err');return;}
+  const btn=document.getElementById('place-btn');
+  btn.disabled=true;btn.textContent='Placing…';
+  const r=await apiFetch('/api/member/trade',{method:'POST',body:JSON.stringify({provider_id:currentProvider.id,direction:selectedDir,stake,duration_seconds:selectedDur})});
+  btn.disabled=false;btn.textContent='⚡ Place Trade';
+  if(r&&r.ok){
+    const trade=r.data.data?.trade;
+    showToast('Trade placed! Waiting '+selectedDur+'s for result…');
+    loadOpenTrades();loadDashMini();
+    setTimeout(()=>{checkResult(trade?.id);loadHistory();},selectedDur*1000+2000);
+  }else{
+    const msg=r?.data?.message||'Error placing trade';
+    showToast(msg,'err');
+  }
+}
+
+async function checkResult(tradeId){
+  if(!tradeId)return;
+  const r=await apiFetch('/api/member/trades');
+  if(!r||!r.ok)return;
+  const trade=(r.data.data?.trades||[]).find(t=>t.id===tradeId);
+  if(!trade)return;
+  const resultEl=document.getElementById('trade-result');
+  const isWin=trade.result==='win';
+  resultEl.className='trade-result show '+(isWin?'win':'loss');
+  resultEl.innerHTML=`<div style="font-size:24px;margin-bottom:6px">${isWin?'🎉':'💸'}</div><div style="font-size:16px;font-weight:800;color:var(--${isWin?'green':'red'})">${isWin?'YOU WIN!':'YOU LOSE'}</div><div style="font-size:13px;color:var(--muted2);margin-top:4px">${isWin?'+₱'+parseFloat(trade.profit||0).toFixed(2):'-₱'+parseFloat(trade.stake||0).toFixed(2)}</div>`;
+  setTimeout(()=>resultEl.classList.remove('show'),5000);
+  loadDashMini();loadOpenTrades();
+}
+
+async function loadOpenTrades(){
+  const r=await apiFetch('/api/member/dashboard');
+  if(!r||!r.ok)return;
+  const trades=r.data.data?.open_trades||[];
+  const el=document.getElementById('open-trades-list');
+  if(!trades.length){el.innerHTML='<div style="text-align:center;color:var(--muted);padding:16px;font-size:13px">No open trades</div>';return;}
+  el.innerHTML=trades.map(t=>{
+    const remaining=Math.max(0,t.duration_seconds-Math.floor((Date.now()-new Date(t.created_at).getTime())/1000));
+    return `<div class="open-trade-row">
+      <div class="ot-name">${t.game_providers?.name||'Provider'}<br><span style="font-size:10px;color:var(--muted)">${t.game_providers?.slug?.toUpperCase()||''}</span></div>
+      <span class="ot-dir ${t.direction==='up'?'up':'dn'}">${t.direction==='up'?'▲ UP':'▼ DOWN'}</span>
+      <span class="ot-stake">₱${parseFloat(t.stake||0).toFixed(0)}</span>
+      <span class="ot-timer" id="timer-${t.id}">${remaining}s</span>
+    </div>`;
+  }).join('');
+  trades.forEach(t=>{
+    let r2=Math.max(0,t.duration_seconds-Math.floor((Date.now()-new Date(t.created_at).getTime())/1000));
+    const iv=setInterval(()=>{
+      r2--;
+      const el2=document.getElementById('timer-'+t.id);
+      if(el2)el2.textContent=r2+'s';
+      if(r2<=0){clearInterval(iv);setTimeout(loadOpenTrades,2000);}
+    },1000);
+  });
+}
+
+async function loadHistory(){
+  const r=await apiFetch('/api/member/trades');
+  if(!r||!r.ok)return;
+  const trades=r.data.data?.trades||[];
+  const tbody=document.getElementById('history-tbody');
+  if(!trades.length){tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:16px">No trades yet</td></tr>';return;}
+  tbody.innerHTML=trades.slice(0,20).map(t=>`<tr>
+    <td><strong>${t.game_providers?.name||'—'}</strong></td>
+    <td><span class="badge ${t.direction==='up'?'win':'loss'}">${t.direction==='up'?'▲ UP':'▼ DOWN'}</span></td>
+    <td>₱${parseFloat(t.stake||0).toFixed(2)}</td>
+    <td><span class="badge ${t.result}">${t.result==='win'?'WIN':'LOSS'}</span></td>
+    <td style="color:${t.result==='win'?'var(--green)':'var(--red)'}">${t.result==='win'?'+':'-'}₱${t.result==='win'?parseFloat(t.profit||0).toFixed(2):parseFloat(t.stake||0).toFixed(2)}</td>
+    <td style="color:var(--muted);font-size:12px">${new Date(t.created_at).toLocaleString('en-PH',{dateStyle:'short',timeStyle:'short'})}</td>
+  </tr>`).join('');
+}
+
+async function loadBalance(){
+  const r=await apiFetch('/api/member/dashboard');
+  if(!r||!r.ok)return;
+  const b=parseFloat(r.data.data?.member?.balance||0);
+  document.getElementById('trade-bal').textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2});
+}
+
+setDir('up');
+loadProviders();loadBalance();loadOpenTrades();loadHistory();
+setInterval(loadOpenTrades,15000);
+</script>
+</body>
+</html>

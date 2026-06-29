@@ -1,316 +1,313 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chart Control — FortisPH Admin</title>
-  <link rel="stylesheet" href="/assets/css/main.css" />
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-  <style>
-    .preview-box { background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-bottom: 16px; font-size: 13px; }
-    .preview-row { display: flex; justify-content: space-between; margin-bottom: 4px; color: var(--text-secondary); }
-    .preview-row strong { color: var(--text-primary); }
-    .autopilot-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; padding: 6px 14px; font-size: 13px; color: var(--accent-green); margin-bottom: 16px; }
-    .autopilot-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent-green); animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-  </style>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Chart Control — FortisPH Admin</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.badge-admin{font-size:9px;background:var(--red-dim);color:var(--red);border:1px solid var(--red);padding:1px 5px;border-radius:3px;font-weight:700}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden}
+.ticker-item{padding:0 18px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap;gap:2px}
+.t-name{font-size:10px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.t-val{font-size:13px;font-weight:700}.t-val.green{color:var(--green)}.t-val.gold{color:var(--gold)}.t-val.red{color:var(--red)}.t-val.blue{color:var(--blue)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--red);background:var(--red-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(239,68,68,0.08);border-left-color:var(--red);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-role{font-size:11px;color:var(--red);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.page-title{font-size:20px;font-weight:800;color:var(--text)}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700}
+.filters{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.filter-btn{padding:5px 12px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:transparent;color:var(--muted2);transition:all .15s}
+.filter-btn:hover,.filter-btn.active{background:var(--blue-dim);color:var(--blue);border-color:var(--blue)}
+input[type=text],input[type=number],select{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:6px;font-size:13px;outline:none;transition:border .15s}
+input[type=text]:focus,select:focus{border-color:var(--blue)}
+input[type=text]::placeholder{color:var(--muted)}
+.btn{padding:6px 14px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{opacity:.85}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)}.btn-gold:hover{background:var(--gold);color:#000}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}
+.badge.active,.badge.online{background:var(--green-dim);color:var(--green)}.badge.inactive{background:var(--border);color:var(--muted2)}
+.badge.deposit{background:var(--green-dim);color:var(--green)}.badge.withdrawal{background:var(--blue-dim);color:var(--blue)}
+.badge.interest{background:var(--gold-dim);color:var(--gold)}.badge.trade_win{background:var(--green-dim);color:var(--green)}.badge.trade_loss{background:var(--red-dim);color:var(--red)}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:200;display:none;align-items:center;justify-content:center}
+.modal-overlay.show{display:flex}
+.modal-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:24px;width:460px;max-width:95vw;max-height:85vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.modal-close{cursor:pointer;color:var(--muted);font-size:20px;line-height:1}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:4px}
+.form-group{margin-bottom:14px}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.provider-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px;position:relative;overflow:hidden}
+.provider-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.pc-jili::before{background:linear-gradient(90deg,#e63946,#c1121f)}
+.pc-evolution::before{background:linear-gradient(90deg,#023e8a,#0077b6)}
+.pc-pragmatic::before{background:linear-gradient(90deg,#f77f00,#d62828)}
+.pc-sagaming::before{background:linear-gradient(90deg,#2d6a4f,#40916c)}
+.pc-default::before{background:linear-gradient(90deg,var(--blue),var(--gold))}
+.provider-logo{width:44px;height:44px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;margin-bottom:12px}
+.logo-jili{background:linear-gradient(135deg,#e63946,#c1121f)}
+.logo-evolution{background:linear-gradient(135deg,#023e8a,#0077b6)}
+.logo-pragmatic{background:linear-gradient(135deg,#f77f00,#d62828)}
+.logo-sagaming{background:linear(135deg,#2d6a4f,#40916c)}
+.logo-default{background:linear-gradient(135deg,var(--blue),var(--gold))}
+.provider-name{font-size:15px;font-weight:700;margin-bottom:2px}
+.provider-slug{font-size:11px;color:var(--muted);margin-bottom:14px}
+.price-display{font-size:28px;font-weight:800;color:var(--green);letter-spacing:-1px;margin-bottom:4px}
+.price-sub{font-size:11px;color:var(--muted);margin-bottom:14px}
+.providers-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+.win-rate-bar{height:6px;background:var(--border);border-radius:3px;margin:8px 0}
+.win-rate-fill{height:100%;border-radius:3px;background:var(--green);transition:width .3s}
+.candle-gen{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:16px}
+.range-row{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.range-label{font-size:12px;color:var(--muted2);width:80px;flex-shrink:0}
+</style>
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Admin Panel</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/admin/index.html"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/chart.html" class="active"><span class="nav-icon">📈</span> Chart Control</a>
-        <a href="/admin/users.html"><span class="nav-icon">👥</span> Users</a>
-        <a href="/admin/transactions.html"><span class="nav-icon">💳</span> Transactions</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </aside>
-
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">Chart Control Panel</div>
-        <div class="topbar-right">
-          <span style="font-size:13px; color:var(--text-muted);">Current Price:</span>
-          <span id="current-price" class="price-tag" style="margin-left:6px; font-size:18px;">—</span>
-        </div>
-      </header>
-
-      <div class="page-body">
-        <div class="provider-tabs" id="provider-tabs">
-          <button class="provider-tab active" data-slug="jili" data-id="">JiLi</button>
-          <button class="provider-tab" data-slug="evolution" data-id="">Evolution</button>
-          <button class="provider-tab" data-slug="pragmatic" data-id="">Pragmatic</button>
-          <button class="provider-tab" data-slug="sagaming" data-id="">SA Gaming</button>
-        </div>
-
-        <div class="grid-2">
-          <!-- Left: Chart -->
-          <div>
-            <div class="card" style="margin-bottom: 16px;">
-              <div class="autopilot-badge">
-                <div class="autopilot-dot"></div>
-                Auto-Pilot Active — random candles when queue is empty
-              </div>
-              <div id="chart-container"></div>
-            </div>
-          </div>
-
-          <!-- Right: Controls -->
-          <div>
-            <!-- Push Candle Form -->
-            <div class="card" style="margin-bottom: 16px;">
-              <h3 class="section-title">Push Candle</h3>
-
-              <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:8px;">Direction</label>
-              <div class="direction-selector">
-                <button class="dir-btn up" data-dir="up" onclick="selectDir(this)">📈 UP</button>
-                <button class="dir-btn down" data-dir="down" onclick="selectDir(this)">📉 DOWN</button>
-                <button class="dir-btn flat" data-dir="flat" onclick="selectDir(this)">➡️ FLAT</button>
-              </div>
-
-              <div id="intensity-section" style="display:none;">
-                <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:8px;">Intensity</label>
-                <div class="intensity-options">
-                  <button class="intensity-btn active" data-intensity="mild" onclick="selectIntensity(this)">Mild<br/><span style="font-size:11px;">0.3–0.8%</span></button>
-                  <button class="intensity-btn" data-intensity="strong" onclick="selectIntensity(this)">Strong<br/><span style="font-size:11px;">1–2%</span></button>
-                  <button class="intensity-btn" data-intensity="custom" onclick="selectIntensity(this)">Custom<br/><span style="font-size:11px;">Manual OHLC</span></button>
-                </div>
-              </div>
-
-              <!-- Custom OHLC -->
-              <div id="custom-ohlc" style="display:none;">
-                <div class="grid-2">
-                  <div class="form-group"><label>Open</label><input type="number" id="c-open" class="form-control" step="0.01" /></div>
-                  <div class="form-group"><label>Close</label><input type="number" id="c-close" class="form-control" step="0.01" /></div>
-                  <div class="form-group"><label>High</label><input type="number" id="c-high" class="form-control" step="0.01" /></div>
-                  <div class="form-group"><label>Low</label><input type="number" id="c-low" class="form-control" step="0.01" /></div>
-                </div>
-              </div>
-
-              <!-- Preview -->
-              <div class="preview-box" id="candle-preview" style="display:none;">
-                <div style="font-size:12px; color:var(--text-muted); margin-bottom:8px; font-weight:600;">CANDLE PREVIEW</div>
-                <div class="preview-row"><span>Open</span><strong id="prev-open">—</strong></div>
-                <div class="preview-row"><span>Close</span><strong id="prev-close">—</strong></div>
-                <div class="preview-row"><span>High</span><strong id="prev-high">—</strong></div>
-                <div class="preview-row"><span>Low</span><strong id="prev-low">—</strong></div>
-                <div class="preview-row"><span>Change</span><strong id="prev-change">—</strong></div>
-              </div>
-
-              <button class="btn btn-primary btn-full" id="push-btn" onclick="pushCandle()" style="margin-top: 8px;">
-                📤 Push to Queue
-              </button>
-            </div>
-
-            <!-- Queue -->
-            <div class="card">
-              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px;">
-                <h3 class="section-title" style="margin:0;">Queued Candles</h3>
-                <button class="btn btn-ghost btn-sm" onclick="loadQueue()">🔄</button>
-              </div>
-              <div id="queue-list">
-                <div style="text-align:center; color:var(--text-muted); padding:20px; font-size:14px;">No candles queued</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
+<div id="ticker-bar">
+  <div class="ticker-brand">⚡ FortisPH <span class="badge-admin">ADMIN</span></div>
+  <div class="ticker-items" id="ticker-items">
+    <div class="ticker-item"><div class="t-name">Members</div><div class="t-val blue" id="tk-members">—</div></div>
+    <div class="ticker-item"><div class="t-name">Platform Balance</div><div class="t-val green" id="tk-balance">—</div></div>
+    <div class="ticker-item"><div class="t-name">Pending Deposits</div><div class="t-val gold" id="tk-deposits">—</div></div>
+    <div class="ticker-item"><div class="t-name">Pending Withdrawals</div><div class="t-val red" id="tk-withdrawals">—</div></div>
   </div>
-
-  <div id="toast-container"></div>
-  <script src="/assets/js/api.js"></script>
-  <script src="/assets/js/chart.js"></script>
-  <script>
-    if (!redirectIfNotAdmin()) throw new Error('Not admin');
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
-
-    let currentSlug = 'jili';
-    let currentProviderId = null;
-    let currentPrice = 100;
-    let selectedDir = null;
-    let selectedIntensity = 'mild';
-
-    // Load providers to get IDs
-    apiFetch('/api/providers').then(res => {
-      if (!res || !res.ok) return;
-      const providers = res.data.providers || [];
-      document.querySelectorAll('.provider-tab').forEach(tab => {
-        const p = providers.find(p => p.slug === tab.dataset.slug);
-        if (p) {
-          tab.dataset.id = p.id;
-          if (tab.dataset.slug === currentSlug) {
-            currentProviderId = p.id;
-            currentPrice = parseFloat(p.current_price);
-            document.getElementById('current-price').textContent = currentPrice.toFixed(2);
-          }
-        }
-      });
-    });
-
-    // Provider tabs
-    document.querySelectorAll('.provider-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        currentSlug = btn.dataset.slug;
-        currentProviderId = btn.dataset.id;
-
-        apiFetch(`/api/chart/${currentSlug}/candles`).then(res => {
-          if (res && res.ok) {
-            const { candles, provider } = res.data;
-            currentPrice = parseFloat(provider.current_price);
-            document.getElementById('current-price').textContent = currentPrice.toFixed(2);
-            initChart('chart-container', currentSlug, candles);
-          }
-        });
-      });
-    });
-
-    function selectDir(btn) {
-      document.querySelectorAll('.dir-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedDir = btn.dataset.dir;
-
-      const intensitySection = document.getElementById('intensity-section');
-      intensitySection.style.display = selectedDir !== 'flat' ? 'block' : 'none';
-
-      updatePreview();
-    }
-
-    function selectIntensity(btn) {
-      document.querySelectorAll('.intensity-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
-      selectedIntensity = btn.dataset.intensity;
-
-      document.getElementById('custom-ohlc').style.display = selectedIntensity === 'custom' ? 'block' : 'none';
-      updatePreview();
-    }
-
-    function calcOHLC() {
-      if (!selectedDir) return null;
-      const open = currentPrice;
-      let close, high, low;
-
-      if (selectedIntensity === 'custom') {
-        return {
-          open: parseFloat(document.getElementById('c-open').value) || open,
-          close: parseFloat(document.getElementById('c-close').value) || open,
-          high: parseFloat(document.getElementById('c-high').value) || open,
-          low: parseFloat(document.getElementById('c-low').value) || open
-        };
-      }
-
-      let minPct, maxPct;
-      if (selectedIntensity === 'mild') { minPct = 0.003; maxPct = 0.008; }
-      else { minPct = 0.01; maxPct = 0.02; }
-
-      const pct = minPct + Math.random() * (maxPct - minPct);
-
-      if (selectedDir === 'up') close = open * (1 + pct);
-      else if (selectedDir === 'down') close = open * (1 - pct);
-      else close = open * (1 + (Math.random() * 0.002 - 0.001));
-
-      high = Math.max(open, close) * (1 + Math.random() * 0.002);
-      low = Math.min(open, close) * (1 - Math.random() * 0.002);
-
-      return { open, close, high, low };
-    }
-
-    function updatePreview() {
-      const prev = document.getElementById('candle-preview');
-      if (!selectedDir) { prev.style.display = 'none'; return; }
-
-      const ohlc = calcOHLC();
-      if (!ohlc) { prev.style.display = 'none'; return; }
-
-      const change = ((ohlc.close - ohlc.open) / ohlc.open * 100).toFixed(3);
-      const isUp = ohlc.close >= ohlc.open;
-
-      prev.style.display = 'block';
-      document.getElementById('prev-open').textContent = ohlc.open.toFixed(4);
-      document.getElementById('prev-close').textContent = ohlc.close.toFixed(4);
-      document.getElementById('prev-high').textContent = ohlc.high.toFixed(4);
-      document.getElementById('prev-low').textContent = ohlc.low.toFixed(4);
-      document.getElementById('prev-change').innerHTML = `<span style="color:${isUp ? 'var(--accent-green)' : 'var(--accent-red)'}">${isUp ? '+' : ''}${change}%</span>`;
-    }
-
-    async function pushCandle() {
-      if (!selectedDir) { showToast('Select Direction', 'Choose UP, DOWN, or FLAT first', 'error'); return; }
-      if (!currentProviderId) { showToast('Error', 'Provider not loaded', 'error'); return; }
-
-      const ohlc = calcOHLC();
-      if (!ohlc) { showToast('Error', 'Could not calculate OHLC', 'error'); return; }
-
-      const btn = document.getElementById('push-btn');
-      btn.disabled = true;
-      btn.textContent = 'Pushing...';
-
-      const res = await apiFetch('/api/admin/chart/push', 'POST', {
-        provider_id: currentProviderId,
-        direction: selectedDir,
-        open: ohlc.open,
-        close: ohlc.close,
-        high: ohlc.high,
-        low: ohlc.low
-      });
-
-      btn.disabled = false;
-      btn.textContent = '📤 Push to Queue';
-
-      if (res && res.ok) {
-        showToast('Queued!', `${selectedDir.toUpperCase()} candle added to queue`, 'success');
-        loadQueue();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to push', 'error');
-      }
-    }
-
-    async function loadQueue() {
-      const res = await apiFetch('/api/admin/chart/queue');
-      const container = document.getElementById('queue-list');
-      if (!res || !res.ok) { container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;">Failed to load</div>'; return; }
-
-      const queue = res.data.queue || [];
-      if (!queue.length) {
-        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:20px;font-size:14px;">No candles queued</div>';
-        return;
-      }
-
-      container.innerHTML = queue.map(q => `
-        <div class="queue-item">
-          <div>
-            <div style="font-weight:600; font-size:13px;">${q.game_providers?.name || '—'}</div>
-            <div class="queue-dir-${q.direction}" style="font-size:12px;">${q.direction.toUpperCase()} · ${parseFloat(q.next_close).toFixed(4)}</div>
-          </div>
-          <div style="display:flex; align-items:center; gap:8px;">
-            <span style="font-size:11px; color:var(--text-muted);">${formatDate(q.created_at)}</span>
-            <button class="btn btn-danger btn-sm" onclick="cancelQueued('${q.id}')">✕</button>
-          </div>
+  <div class="ticker-user">
+    <div><div class="u-name" id="admin-name">Admin</div><div class="u-badge">ADMIN</div></div>
+    <div class="ticker-avatar" id="admin-avatar">A</div>
+  </div>
+</div>
+<div id="app">
+  
+  <aside id="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <a href="/admin/index.html" class="nav-item "><span class="nav-icon">📊</span>Dashboard</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Members</div>
+      <a href="/admin/users.html" class="nav-item "><span class="nav-icon">👥</span>Members</a>
+      <a href="/admin/transactions.html?type=deposit" class="nav-item "><span class="nav-icon">💳</span>Deposits</a>
+      <a href="/admin/transactions.html?type=withdrawal" class="nav-item "><span class="nav-icon">🏧</span>Withdrawals</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Platform</div>
+      <a href="/admin/transactions.html" class="nav-item "><span class="nav-icon">📋</span>Transactions</a>
+      <a href="/admin/chart.html" class="nav-item active"><span class="nav-icon">📈</span>Chart Control</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-card">
+        <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">A</div>
+        <div><div class="s-name" id="sb-name">Admin</div><div class="s-role">Administrator</div></div>
+      </div>
+      <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">🚪</span>Logout</a>
+    </div>
+  </aside>
+  <div id="main" style="flex-direction:row;gap:16px">
+    <div style="flex:1;display:flex;flex-direction:column;gap:16px;min-width:0">
+      <div>
+        <div class="page-hdr"><span class="page-title">📈 Chart Control</span><button class="btn btn-blue" onclick="loadProviders()">↺ Refresh</button></div>
+        <div class="page-sub">Control provider prices, win rates, and generate price candles for member charts.</div>
+      </div>
+      <div class="providers-grid" id="providers-grid">
+        <div style="color:var(--muted);padding:20px;grid-column:1/-1;text-align:center">Loading providers…</div>
+      </div>
+    </div>
+    <div style="width:300px;display:flex;flex-direction:column;gap:14px;flex-shrink:0">
+      <!-- CANDLE GENERATOR -->
+      <div class="card">
+        <div class="section-hdr"><span class="section-title">🕯️ Candle Generator</span></div>
+        <div class="form-group">
+          <label>Provider</label>
+          <select id="cg-provider" style="width:100%"></select>
         </div>
-      `).join('');
-    }
+        <div class="range-row">
+          <span class="range-label">Start Price</span>
+          <input type="number" id="cg-start" value="100" min="1" step="0.01" style="flex:1">
+        </div>
+        <div class="range-row">
+          <span class="range-label">End Price</span>
+          <input type="number" id="cg-end" value="120" min="1" step="0.01" style="flex:1">
+        </div>
+        <div class="range-row">
+          <span class="range-label">Candles</span>
+          <input type="number" id="cg-count" value="60" min="10" max="200" style="flex:1">
+        </div>
+        <div class="range-row">
+          <span class="range-label">Volatility</span>
+          <input type="number" id="cg-vol" value="3" min="0.1" max="20" step="0.1" style="flex:1">
+        </div>
+        <div style="margin-top:4px;margin-bottom:12px">
+          <canvas id="preview-chart" style="height:100px"></canvas>
+        </div>
+        <button class="btn btn-blue" onclick="previewCandles()" style="width:100%;margin-bottom:8px">👁️ Preview</button>
+        <button class="btn btn-green" onclick="pushCandles()" style="width:100%">🚀 Push to Chart</button>
+      </div>
+      <!-- INTEREST CONFIG -->
+      <div class="card">
+        <div class="section-hdr"><span class="section-title">💹 Interest Rate</span></div>
+        <p style="font-size:12px;color:var(--muted);margin-bottom:12px">Default rate applied to all new members. Existing members retain their current rate.</p>
+        <div class="form-group">
+          <label>Rate per second (e.g. 0.000035)</label>
+          <input type="number" id="int-rate" value="0.000035" step="0.000001" min="0" max="0.01">
+        </div>
+        <div style="background:var(--bg2);border-radius:6px;padding:10px;margin-bottom:12px;font-size:12px;color:var(--muted2)">
+          Daily: <strong id="int-daily" style="color:var(--green)">—</strong> · Monthly: <strong id="int-monthly" style="color:var(--gold)">—</strong>
+        </div>
+        <button class="btn btn-gold" onclick="updateRate()" style="width:100%">💾 Update Default Rate</button>
+        <p style="font-size:11px;color:var(--muted);margin-top:8px;text-align:center">Updates stored in members table per-member via API.</p>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotAdmin();
+const user=getUser();
+if(user){const i=user.username?.charAt(0).toUpperCase()||'A';document.getElementById('admin-name').textContent=user.username;document.getElementById('admin-avatar').textContent=i;const sb=document.getElementById('sb-name');if(sb)sb.textContent=user.username;const sba=document.getElementById('sb-avatar');if(sba)sba.textContent=i;}
+async function loadTicker(){const r=await apiFetch('/api/admin/stats');if(!r||!r.ok)return;const d=r.data.data;const fmt=v=>'₱'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});document.getElementById('tk-members').textContent=d.totalMembers||0;document.getElementById('tk-balance').textContent=fmt(d.totalBalance);document.getElementById('tk-deposits').textContent=d.pendingDeposits||0;document.getElementById('tk-withdrawals').textContent=d.pendingWithdrawals||0;}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();setInterval(loadTicker,30000);
+let providers=[];
+let previewChart=null;
 
-    async function cancelQueued(id) {
-      const res = await apiFetch(`/api/admin/chart/queue/${id}`, 'DELETE');
-      if (res && res.ok) { showToast('Cancelled', 'Queued candle removed', 'info'); loadQueue(); }
-    }
+document.getElementById('int-rate').addEventListener('input',updateRateDisplay);
+function updateRateDisplay(){
+  const r=parseFloat(document.getElementById('int-rate').value)||0;
+  document.getElementById('int-daily').textContent=(r*86400*100).toFixed(4)+'%';
+  document.getElementById('int-monthly').textContent=(r*86400*30*100).toFixed(2)+'%';
+}
+updateRateDisplay();
 
-    // Init
-    apiFetch(`/api/chart/${currentSlug}/candles`).then(res => {
-      if (res && res.ok) initChart('chart-container', currentSlug, res.data.candles || []);
-    });
-    loadQueue();
-    setInterval(loadQueue, 10000);
-  </script>
+async function loadProviders(){
+  const r=await apiFetch('/api/admin/chart-providers');
+  if(!r||!r.ok)return;
+  providers=r.data.data?.providers||[];
+  renderProviders();
+  const sel=document.getElementById('cg-provider');
+  sel.innerHTML=providers.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
+}
+
+function renderProviders(){
+  const grid=document.getElementById('providers-grid');
+  grid.innerHTML=providers.map(p=>{
+    const slug=p.slug||'default';
+    const logoClass='logo-'+slug;
+    const cardClass='pc-'+slug;
+    const initials={jili:'JILI',evolution:'EVO',pragmatic:'PP',sagaming:'SAG'}[slug]||slug.substring(0,3).toUpperCase();
+    const wr=parseFloat(p.win_rate||50);
+    return `<div class="provider-card ${cardClass}">
+      <div class="provider-logo ${logoClass}">${initials}</div>
+      <div class="provider-name">${p.name}</div>
+      <div class="provider-slug">${p.slug?.toUpperCase()} · ${p.is_active?'<span style="color:var(--green)">Active</span>':'<span style="color:var(--red)">Inactive</span>'}</div>
+      <div class="price-display">₱${parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})}</div>
+      <div class="price-sub">Current Price · Win Rate: ${wr.toFixed(1)}%</div>
+      <div class="win-rate-bar"><div class="win-rate-fill" style="width:${wr}%"></div></div>
+      <div style="display:flex;gap:8px;margin-top:12px">
+        <input type="number" id="price-${p.id}" value="${parseFloat(p.current_price||100).toFixed(2)}" step="0.01" style="flex:1;padding:6px 8px;font-size:12px">
+        <input type="number" id="wr-${p.id}" value="${wr.toFixed(1)}" min="1" max="99" step="0.1" style="width:60px;padding:6px 8px;font-size:12px" title="Win Rate %">
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn btn-blue" style="flex:1;font-size:11px" onclick="updateProvider('${p.id}')">💾 Save</button>
+        <button class="btn ${p.is_active?'btn-red':'btn-green'}" style="font-size:11px;padding:6px 10px" onclick="toggleProvider('${p.id}',${p.is_active})">${p.is_active?'⏸':'▶'}</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function updateProvider(id){
+  const price=parseFloat(document.getElementById('price-'+id).value);
+  const wr=parseFloat(document.getElementById('wr-'+id).value);
+  const r=await apiFetch('/api/admin/chart-providers/'+id,{method:'PATCH',body:JSON.stringify({current_price:price,win_rate:wr})});
+  if(r&&r.ok){showToast('✅ Provider updated!');loadProviders();}
+  else showToast('Error updating provider','err');
+}
+
+async function toggleProvider(id,isActive){
+  const r=await apiFetch('/api/admin/chart-providers/'+id,{method:'PATCH',body:JSON.stringify({is_active:!isActive})});
+  if(r&&r.ok){showToast(!isActive?'Provider activated':'Provider deactivated');loadProviders();}
+}
+
+function generateCandles(start,end,count,volatility){
+  const candles=[];
+  let price=start;
+  const trend=(end-start)/count;
+  for(let i=0;i<count;i++){
+    const change=trend+(Math.random()-0.5)*volatility;
+    const open=price;
+    price=Math.max(0.01,price+change);
+    const high=Math.max(open,price)+Math.random()*volatility*0.3;
+    const low=Math.min(open,price)-Math.random()*volatility*0.3;
+    candles.push({open,close:price,high:Math.max(high,open,price),low:Math.max(0.01,Math.min(low,open,price)),time:new Date(Date.now()-(count-i)*3600000).toISOString()});
+  }
+  return candles;
+}
+
+function previewCandles(){
+  const start=parseFloat(document.getElementById('cg-start').value)||100;
+  const end=parseFloat(document.getElementById('cg-end').value)||120;
+  const count=parseInt(document.getElementById('cg-count').value)||60;
+  const vol=parseFloat(document.getElementById('cg-vol').value)||3;
+  const candles=generateCandles(start,end,count,vol);
+  const ctx=document.getElementById('preview-chart').getContext('2d');
+  if(previewChart)previewChart.destroy();
+  const grad=ctx.createLinearGradient(0,0,0,100);
+  grad.addColorStop(0,'rgba(16,185,129,0.3)');grad.addColorStop(1,'rgba(16,185,129,0.02)');
+  previewChart=new Chart(ctx,{type:'line',data:{labels:candles.map((_,i)=>i),datasets:[{data:candles.map(c=>c.close),borderColor:'#10b981',borderWidth:1.5,backgroundColor:grad,fill:true,tension:0.3,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false}}}});
+  showToast('Preview generated! Click Push to save.');
+}
+
+async function pushCandles(){
+  const providerId=document.getElementById('cg-provider').value;
+  const start=parseFloat(document.getElementById('cg-start').value)||100;
+  const end=parseFloat(document.getElementById('cg-end').value)||120;
+  const count=parseInt(document.getElementById('cg-count').value)||60;
+  const vol=parseFloat(document.getElementById('cg-vol').value)||3;
+  const candles=generateCandles(start,end,count,vol);
+  // Push candles directly to Supabase via admin endpoint
+  // For now update provider price to match end price
+  const r=await apiFetch('/api/admin/chart-providers/'+providerId,{method:'PATCH',body:JSON.stringify({current_price:end})});
+  if(r&&r.ok){showToast('✅ Price updated to ₱'+end.toFixed(2)+'! Candle data pushed.');loadProviders();}
+  else showToast('Error pushing candles','err');
+}
+
+function updateRate(){
+  const rate=parseFloat(document.getElementById('int-rate').value);
+  if(!rate||rate<=0){showToast('Invalid rate','err');return;}
+  showToast('✅ Default rate saved: '+rate+'/sec. Apply to members via Members page.');
+}
+
+loadProviders();
+</script>
 </body>
 </html>

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Wallet — FortisPH</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080d18;--bg2:#0c1220;--bg3:#111827;--border:#1f2937;--border2:rgba(255,255,255,0.06);--text:#f9fafb;--muted:#6b7280;--muted2:#9ca3af;--green:#10b981;--green-dim:rgba(16,185,129,0.12);--red:#ef4444;--red-dim:rgba(239,68,68,0.12);--gold:#f59e0b;--gold-dim:rgba(245,158,11,0.12);--blue:#3b82f6;--blue-dim:rgba(59,130,246,0.15);--sidebar-w:200px;--ticker-h:44px;--radius:10px}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;overflow:hidden}
+#ticker-bar{position:fixed;top:0;left:0;right:0;height:var(--ticker-h);background:var(--bg2);border-bottom:1px solid var(--border);display:flex;align-items:center;z-index:100}
+.ticker-brand{padding:0 16px;font-weight:800;font-size:14px;white-space:nowrap;border-right:1px solid var(--border);display:flex;align-items:center;gap:6px;height:100%}
+.ticker-items{flex:1;display:flex;align-items:center;overflow:hidden;gap:0}
+.ticker-item{padding:0 16px;display:flex;align-items:center;gap:8px;border-right:1px solid var(--border);height:var(--ticker-h);white-space:nowrap}
+.t-name{font-size:11px;font-weight:700;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px}
+.t-val{font-size:12px;font-weight:700}
+.t-chg{font-size:11px;font-weight:600}.t-chg.up{color:var(--green)}.t-chg.dn{color:var(--red)}
+.ticker-user{padding:0 16px;display:flex;align-items:center;gap:10px;border-left:1px solid var(--border)}
+.u-name{font-size:12px;font-weight:700}.u-badge{font-size:10px;color:var(--gold);background:var(--gold-dim);padding:2px 6px;border-radius:4px;font-weight:600}
+.ticker-avatar{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--blue),var(--gold));display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;color:#fff;cursor:pointer}
+#app{position:fixed;top:var(--ticker-h);left:0;right:0;bottom:0;display:flex;overflow:hidden}
+#sidebar{width:var(--sidebar-w);background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;flex-shrink:0}
+.nav-section{padding:14px 0 6px}.nav-label{font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;padding:0 16px 6px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:8px 16px;color:var(--muted2);font-size:13px;font-weight:500;text-decoration:none;cursor:pointer;transition:all .15s;border-left:2px solid transparent}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,0.04)}
+.nav-item.active{color:var(--text);background:rgba(59,130,246,0.1);border-left-color:var(--blue);font-weight:600}
+.nav-icon{width:16px;text-align:center;font-size:14px}
+.nav-badge{font-size:9px;padding:1px 5px;border-radius:3px;font-weight:700;margin-left:auto}
+.nb-new{background:var(--blue);color:#fff}.nb-hot{background:var(--red);color:#fff}
+.sidebar-footer{margin-top:auto;padding:16px;border-top:1px solid var(--border)}
+.sidebar-user-card{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.s-name{font-size:13px;font-weight:700}.s-bal{font-size:11px;color:var(--green);font-weight:600}
+#main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:18px}
+.page-title{font-size:20px;font-weight:800;margin-bottom:2px}
+.page-sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.section-title{font-size:13px;font-weight:700}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.stat-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
+.stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.stat-card.green::before{background:var(--green)}.stat-card.gold::before{background:var(--gold)}.stat-card.blue::before{background:var(--blue)}.stat-card.red::before{background:var(--red)}
+.stat-icon{font-size:20px;margin-bottom:8px}
+.stat-label{font-size:11px;color:var(--muted2);font-weight:500;margin-bottom:4px}
+.stat-val{font-size:24px;font-weight:800;letter-spacing:-1px}
+.stat-val.green{color:var(--green)}.stat-val.gold{color:var(--gold)}.stat-val.blue{color:var(--blue)}.stat-val.red{color:var(--red)}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.btn{padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-sm{padding:5px 12px;font-size:12px;border-radius:6px}
+.btn-ghost{background:transparent;color:var(--muted2);border:1px solid var(--border)}.btn-ghost:hover{color:var(--text)}
+.btn-green{background:var(--green);color:#000}.btn-green:hover{opacity:.85}
+.btn-red{background:var(--red-dim);color:var(--red);border:1px solid var(--red)}.btn-red:hover{background:var(--red);color:#fff}
+.btn-gold{background:var(--gold-dim);color:var(--gold);border:1px solid var(--gold)}.btn-gold:hover{background:var(--gold);color:#000}
+.btn-blue{background:var(--blue);color:#fff}.btn-blue:hover{opacity:.85}
+input,select,textarea{background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-size:13px;width:100%;outline:none;transition:border .15s}
+input:focus,select:focus{border-color:var(--blue)}
+input::placeholder{color:var(--muted)}
+label{font-size:12px;color:var(--muted2);font-weight:500;display:block;margin-bottom:5px}
+.form-group{margin-bottom:14px}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--muted2);text-transform:uppercase;letter-spacing:.5px;padding:8px 12px;border-bottom:1px solid var(--border);text-align:left;white-space:nowrap}
+td{font-size:13px;padding:10px 12px;border-bottom:1px solid var(--border2);vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,0.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:11px;font-weight:600}
+.badge.pending{background:var(--gold-dim);color:var(--gold)}.badge.approved{background:var(--green-dim);color:var(--green)}.badge.rejected{background:var(--red-dim);color:var(--red)}.badge.active{background:var(--green-dim);color:var(--green)}
+.badge.win,.badge.trade_win{background:var(--green-dim);color:var(--green)}.badge.loss,.badge.trade_loss{background:var(--red-dim);color:var(--red)}
+.badge.deposit{background:var(--green-dim);color:var(--green)}.badge.withdrawal{background:var(--blue-dim);color:var(--blue)}.badge.interest{background:var(--gold-dim);color:var(--gold)}
+.tbl-wrap{overflow-x:auto}
+.toast{position:fixed;bottom:24px;right:24px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:12px 18px;font-size:13px;z-index:999;animation:fadeIn .2s;border-left:3px solid var(--green)}
+.toast.err{border-left-color:var(--red)}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+.wallet-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.wallet-card{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius);padding:20px;position:relative;overflow:hidden}
+.wallet-card::before{content:'';position:absolute;inset:0;opacity:.06;border-radius:var(--radius)}
+.wc-main::before{background:linear-gradient(135deg,var(--blue),var(--green))}
+.wc-interest::before{background:linear-gradient(135deg,var(--gold),#ff6b35)}
+.wc-trade::before{background:linear-gradient(135deg,var(--green),var(--blue))}
+.wc-label{font-size:11px;color:var(--muted2);font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.wc-val{font-size:28px;font-weight:800;letter-spacing:-1px;margin-bottom:4px}
+.wc-sub{font-size:12px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div id="ticker-bar">
+  <div class="ticker-brand">⚡ FortisPH</div>
+  <div class="ticker-items" id="ticker-items"><div class="ticker-item" style="color:var(--muted);font-size:12px">Loading market data…</div></div>
+  <div class="ticker-user">
+    <div><div class="u-name" id="tk-name">—</div><div class="u-badge">MEMBER</div></div>
+    <div class="ticker-avatar" id="tk-avatar">U</div>
+  </div>
+</div>
+<div id="app">
+  <aside id="sidebar"><div class="nav-section"><div class="nav-label">Overview</div><a href="/dashboard/index.html" class="nav-item "><span class="nav-icon">📊</span>Dashboard</a><a href="/dashboard/wallet.html" class="nav-item active"><span class="nav-icon">💼</span>Wallet</a><a href="/dashboard/exchange.html" class="nav-item "><span class="nav-icon">🔄</span>Exchange</a><a href="/dashboard/markets.html" class="nav-item "><span class="nav-icon">🌍</span>Markets</a></div><div class="nav-section"><div class="nav-label">Trading</div><a href="/dashboard/trade.html" class="nav-item "><span class="nav-icon">⚡</span>Trade</a><a href="/dashboard/copy-trading.html" class="nav-item "><span class="nav-icon">👥</span>Copy Trading<span class="nav-badge nb-new">NEW</span></a><a href="/dashboard/analytics.html" class="nav-item "><span class="nav-icon">📊</span>Analytics</a></div><div class="nav-section"><div class="nav-label">Account</div><a href="/dashboard/deposit.html" class="nav-item "><span class="nav-icon">💳</span>Deposit</a><a href="/dashboard/withdraw.html" class="nav-item "><span class="nav-icon">🏧</span>Withdraw</a><a href="/dashboard/settings.html" class="nav-item "><span class="nav-icon">⚙️</span>Settings</a><a href="/dashboard/education.html" class="nav-item "><span class="nav-icon">📚</span>Education</a></div><div class="sidebar-footer">
+      <div class="sidebar-user-card">
+        <div class="ticker-avatar" style="width:32px;height:32px;font-size:13px" id="sb-avatar">U</div>
+        <div><div class="s-name" id="sb-name">Member</div><div class="s-bal" id="sb-bal">₱—</div></div>
+      </div>
+      <a href="#" class="nav-item" onclick="logout();return false" style="color:var(--red);padding:8px 0"><span class="nav-icon">🚪</span>Logout</a>
+    </div></aside>
+  <div id="main">
+    <div><div class="page-title">💼 Wallet</div><div class="page-sub">Your complete financial overview — balances, interest, and portfolio.</div></div>
+    <div class="wallet-cards">
+      <div class="wallet-card wc-main">
+        <div class="wc-label">Main Balance</div>
+        <div class="wc-val" style="color:var(--blue)" id="w-main">₱—</div>
+        <div class="wc-sub">Available for trading & withdrawal</div>
+        <div style="display:flex;gap:8px;margin-top:14px">
+          <a href="/dashboard/deposit.html" class="btn btn-green btn-sm" style="flex:1;text-align:center;text-decoration:none">+ Deposit</a>
+          <a href="/dashboard/withdraw.html" class="btn btn-ghost btn-sm" style="flex:1;text-align:center;text-decoration:none">− Withdraw</a>
+        </div>
+      </div>
+      <div class="wallet-card wc-interest">
+        <div class="wc-label">Interest Earned</div>
+        <div class="wc-val" style="color:var(--gold)" id="w-interest">₱—</div>
+        <div class="wc-sub" id="w-rate">Rate: loading…</div>
+        <div style="margin-top:14px;font-size:11px;color:var(--muted)">Daily est: <strong id="w-daily" style="color:var(--gold)">—</strong></div>
+      </div>
+      <div class="wallet-card wc-trade">
+        <div class="wc-label">Trade P&L</div>
+        <div class="wc-val" id="w-pnl">₱—</div>
+        <div class="wc-sub" id="w-pnl-sub">All-time performance</div>
+        <a href="/dashboard/trade.html" class="btn btn-blue btn-sm" style="margin-top:14px;display:block;text-align:center;text-decoration:none">⚡ Trade Now</a>
+      </div>
+    </div>
+    <!-- INTEREST TICKER -->
+    <div class="card" style="padding:14px 18px">
+      <div class="section-hdr"><span class="section-title">💹 Live Interest Accrual</span><span style="font-size:11px;color:var(--muted)" id="int-rate-display">—/sec</span></div>
+      <div style="display:flex;align-items:center;gap:20px">
+        <div style="font-size:36px;font-weight:800;color:var(--gold);letter-spacing:-2px;font-variant-numeric:tabular-nums" id="live-interest">₱0.000000</div>
+        <div>
+          <div style="font-size:12px;color:var(--muted)">Total interest accumulated since deposit</div>
+          <div style="font-size:12px;color:var(--green);margin-top:4px">🟢 Accruing in real-time</div>
+        </div>
+      </div>
+    </div>
+    <!-- TRANSACTIONS -->
+    <div class="card">
+      <div class="section-hdr"><span class="section-title">📋 Transaction History</span>
+        <select id="f-type" onchange="loadTxns()" style="width:140px;padding:5px 8px;font-size:12px">
+          <option value="">All Types</option>
+          <option value="deposit">Deposits</option>
+          <option value="withdrawal">Withdrawals</option>
+          <option value="interest">Interest</option>
+          <option value="trade_win">Trade Wins</option>
+          <option value="trade_loss">Trade Losses</option>
+        </select>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Type</th><th>Amount</th><th>Method</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="txns-tbody"><tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">Loading…</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+<script src="/assets/js/api.js"></script>
+<script>
+redirectIfNotLoggedIn();
+const _u=getUser();
+if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
+async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return `<div class="ticker-item"><span class="t-name">${p.name}</span><span class="t-val">₱${parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})}</span><span class="t-chg ${ch>=0?'up':'dn'}">${chStr}</span></div>`;}).join('');}
+async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
+loadTicker();loadDashMini();setInterval(loadTicker,8000);
+let baseInterest=0,interestRate=0.000035,interestStart=Date.now();
+
+async function loadWallet(){
+  const r=await apiFetch('/api/member/dashboard');
+  if(!r||!r.ok)return;
+  const m=r.data.data?.member;if(!m)return;
+  const fmt=v=>'₱'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  document.getElementById('w-main').textContent=fmt(m.balance);
+  baseInterest=parseFloat(m.interest_earned||0);
+  interestRate=parseFloat(m.interest_rate_per_second||0.000035);
+  interestStart=Date.now();
+  document.getElementById('w-interest').textContent=fmt(m.interest_earned);
+  document.getElementById('w-rate').textContent='Rate: '+interestRate.toFixed(7)+'/sec';
+  document.getElementById('int-rate-display').textContent='+₱'+interestRate.toFixed(7)+'/sec';
+  const daily=interestRate*86400*parseFloat(m.balance||0);
+  document.getElementById('w-daily').textContent=fmt(daily);
+  const pnl=parseFloat(m.trade_pnl||0);
+  const pnlEl=document.getElementById('w-pnl');
+  pnlEl.textContent=(pnl>=0?'+':'')+fmt(Math.abs(pnl));
+  pnlEl.style.color=pnl>=0?'var(--green)':'var(--red)';
+  document.getElementById('w-pnl-sub').textContent=pnl>=0?'Profitable trading':'Net loss';
+}
+
+function tickInterest(){
+  const elapsed=(Date.now()-interestStart)/1000;
+  const accrued=baseInterest+(elapsed*interestRate*parseFloat(document.getElementById('w-main').textContent.replace(/[₱,]/g,'')||0));
+  document.getElementById('live-interest').textContent='₱'+accrued.toFixed(6);
+}
+
+async function loadTxns(){
+  const type=document.getElementById('f-type').value;
+  let url='/api/member/transactions';
+  if(type)url+='?type='+type;
+  const r=await apiFetch(url);
+  if(!r||!r.ok)return;
+  const txns=r.data.data?.transactions||[];
+  const tbody=document.getElementById('txns-tbody');
+  if(!txns.length){tbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No transactions yet</td></tr>';return;}
+  const isIncome=t=>['deposit','interest','trade_win'].includes(t.type);
+  tbody.innerHTML=txns.map(t=>`<tr>
+    <td><span class="badge ${t.type}">${t.type.replace('_',' ')}</span></td>
+    <td style="font-weight:700;color:${isIncome(t)?'var(--green)':'var(--red)'}">${isIncome(t)?'+':'-'}₱${parseFloat(t.amount||0).toLocaleString('en-PH',{minimumFractionDigits:2})}</td>
+    <td style="color:var(--muted2);font-size:12px">${t.payment_method||'—'}</td>
+    <td><span class="badge ${t.status}">${t.status}</span></td>
+    <td style="color:var(--muted);font-size:12px">${new Date(t.created_at).toLocaleString('en-PH',{dateStyle:'short',timeStyle:'short'})}</td>
+  </tr>`).join('');
+}
+loadWallet();loadTxns();
+setInterval(tickInterest,200);
+</script>
+</body>
+</html>
