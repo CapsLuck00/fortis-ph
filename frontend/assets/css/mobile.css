@@ -82,23 +82,39 @@ html { animation: _pageEnter 0.13s ease; }
   #sidebar.mob-open { left: 0 !important; }
 
   /* ── APP LAYOUT ── */
+  html, body { overflow: auto !important; height: auto !important; }
+
   #app {
     flex-direction: column !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
+    overflow: visible !important;
+    height: auto !important;
+    min-height: calc(100vh - var(--ticker-h)) !important;
   }
+
   #main {
     flex: 1 1 auto !important;
     width: 100% !important;
-    overflow-y: auto !important;
+    max-width: 100% !important;
+    overflow: visible !important;
     padding: 12px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
   }
 
-  /* Hide right sidebar (dashboard index news feed) */
-  #right-sidebar { display: none !important; }
+  /* Hide right sidebar (news feed / provider panel) */
+  #right-sidebar,
+  [id="right-sidebar"],
+  .right-sidebar { display: none !important; }
 
-  /* ── CONTENT PADDING ── */
-  #content { padding: 12px !important; gap: 12px !important; }
+  /* ── CONTENT AREA ── */
+  #content {
+    padding: 10px !important;
+    gap: 10px !important;
+    overflow: visible !important;
+    min-width: 0 !important;
+    width: 100% !important;
+  }
 
   /* ── DASHBOARD INDEX: wallet row ── */
   #wallets-row {
@@ -117,17 +133,13 @@ html { animation: _pageEnter 0.13s ease; }
   .wallet-cards {
     grid-template-columns: 1fr !important;
   }
-  .stats-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
 
   /* ── TRADE PAGE ── */
   .trade-layout {
     grid-template-columns: 1fr !important;
-    grid-template-rows: auto auto !important;
   }
   #price-chart-wrap { height: 220px !important; }
-  .chart-wrap { height: 220px !important; }
+  .chart-wrap { height: 220px !important; min-height: 180px !important; }
 
   /* ── MARKETS PAGE ── */
   .markets-grid {
@@ -142,6 +154,7 @@ html { animation: _pageEnter 0.13s ease; }
   /* ── ANALYTICS PAGE ── */
   .kpi-row {
     grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
   }
   .analytics-grid {
     grid-template-columns: 1fr !important;
@@ -173,13 +186,10 @@ html { animation: _pageEnter 0.13s ease; }
   }
   .tbl-wrap table { min-width: 520px; }
 
-  /* ── LARGE BALANCE NUMBERS ── */
+  /* ── BALANCE NUMBERS ── */
   .wallet-amount,
   #w-main,
-  #balance-display,
-  .bal-main {
-    font-size: 26px !important;
-  }
+  #balance-display { font-size: 26px !important; }
 
   /* ── ADMIN: stats grid ── */
   .stats-grid {
@@ -191,39 +201,12 @@ html { animation: _pageEnter 0.13s ease; }
 
   /* ── MISC ── */
   .card { border-radius: 8px !important; }
+  .page-title { font-size: 18px !important; }
 }
 
 /* ── EXTRA SMALL: phones < 420px ── */
 @media (max-width: 420px) {
   .kpi-row { grid-template-columns: 1fr !important; }
   .lesson-grid { grid-template-columns: 1fr !important; }
-  .method-grid { grid-template-columns: repeat(2, 1fr) !important; }
   .stats-grid { grid-template-columns: 1fr !important; }
-  .wallet-amount, #w-main { font-size: 22px !important; }
-}
-
-/* ── DASHBOARD INDEX specific overrides ── */
-@media (max-width: 768px) {
-  /* Body scroll must be enabled when sidebar closed */
-  html, body { overflow: auto !important; }
-
-  #main {
-    display: flex !important;
-    flex-direction: column !important;
-    overflow: auto !important;
-    width: 100% !important;
-  }
-
-  #content {
-    padding: 10px !important;
-    gap: 10px !important;
-    overflow: visible !important;
-    min-width: 0 !important;
-  }
-
-  /* Ticker height reduce */
-  #ticker-bar { height: 44px !important; }
-
-  /* Sidebar must be fixed above ticker on mobile */
-  #sidebar { padding-top: 0 !important; }
 }
