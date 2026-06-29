@@ -1,10 +1,12 @@
-// ─── FortisPH — API Utility ─────────────────────────────
-// Change this to your Render backend URL after deploy
+// ===========================================================
+// FortisPH — Frontend API Utility
+// ============================================================
+
 const BASE_URL = 'https://fortis-ph.onrender.com';
 
-// Token helpers
+// ─── Token helpers ──────────────────────────────────────────
 function getToken() {
-  return localStorage.getItem('fortis_token');
+  return localStorage.getItem('fortis_token') || null;
 }
 
 function setToken(token) {
@@ -29,24 +31,24 @@ function setUser(user) {
   localStorage.setItem('fortis_user', JSON.stringify(user));
 }
 
-// Decode JWT payload (no verification — client-side only for role/display)
+// ─── JWT decode (no verify — server does that) ──────────────
 function decodeToken(token) {
   try {
     const payload = token.split('.')[1];
-    return JSON.parse(atob(payload));
+    const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+    return JSON.parse(decoded);
   } catch {
     return null;
   }
 }
 
-// Auth guards
+// ─── Auth guards ────────────────────────────────────────────
 function redirectIfNotLoggedIn() {
   const token = getToken();
   if (!token) {
     window.location.href = '/auth/login.html';
     return false;
   }
-  // Check expiry
   const decoded = decodeToken(token);
   if (!decoded || decoded.exp * 1000 < Date.now()) {
     clearToken();
@@ -57,108 +59,99 @@ function redirectIfNotLoggedIn() {
 }
 
 function redirectIfNotAdmin() {
-  if (!redirectIfNotLoggedIn()) return false;
   const token = getToken();
+  if (!token) {
+    window.location.href = '/admin/login.html';
+    return false;
+  }
   const decoded = decodeToken(token);
-  if (!decoded || decoded.role !== 'admin') {
-    window.location.href = '/dashboard/index.html';
+  if (!decoded || decoded.exp * 1000 < Date.now()) {
+    clearToken();
+    window.location.href = '/admin/login.html';
+    return false;
+  }
+  if (decoded.role !== 'admin') {
+    window.location.href = '/admin/login.html';
     return false;
   }
   return true;
 }
 
-// Main fetch wrapper
-async function apiFetch(endpoint, method = 'GET', body = null) {
-  const headers = {
-    'Content-Type': 'application/json'
-  };
-
+function redirectIfLoggedIn() {
   const token = getToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  if (!token) return true;
+  const decoded = decodeToken(token);
+  if (decoded && decoded.exp * 1000 > Date.now()) {
+    if (decoded.role === 'admin') {
+      window.location.href = '/admin/index.html';
+    } else {
+      window.location.href = '/dashboard/index.html';
+    }
+    return false;
   }
+  clearToken();
+  return true;
+}
 
-  const options = { method, headers };
+function logout() {
+  clearToken();
+  window.location.href = '/auth/login.html';
+}
+
+// ─── API fetch wrapper ──────────────────────────────────────
+async function apiFetch(path, method = 'GET', body = null) {
+  const headers = { 'Content-Type': 'application/json' };
+  const token = getToken();
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const opts = { method, headers };
   if (body && method !== 'GET') {
-    options.body = JSON.stringify(body);
+    opts.body = JSON.stringify(body);
   }
 
   try {
-    const res = await fetch(`${BASE_URL}${endpoint}`, options);
-    const data = await res.json();
-
-    if (res.status === 401) {
-      clearToken();
-      window.location.href = '/auth/login.html';
-      return null;
-    }
-
+    const res = await fetch(`${BASE_URL}${path}`, opts);
+    const data = await res.json().catch(() => ({}));
     return { ok: res.ok, status: res.status, data };
   } catch (err) {
-    console.error(`[API] Error on ${method} ${endpoint}:`, err);
-    return { ok: false, status: 0, data: { error: 'Network error. Check your connection.' } };
+    return { ok: false, status: 0, data: { error: 'Network error' } };
   }
 }
 
-// WebSocket URL builder (converts https to wss)
-function getWsUrl() {
-  return BASE_URL.replace('https://', 'wss://').replace('http://', 'ws://');
-}
-
-// Toast notification system
-function showToast(title, message, type = 'info', duration = 4000) {
-  let container = document.getElementById('toast-container');
-  if (!container) {
-    container = document.createElement('div');
-    container.id = 'toast-container';
-    document.body.appendChild(container);
-  }
-
-  const icons = { success: '✅', error: '❌', info: 'ℹ️', warning: '⚠️' };
-  const toast = document.createElement('div');
-  toast.className = `toast ${type}`;
-  toast.innerHTML = `
-    <div class="toast-icon">${icons[type] || icons.info}</div>
-    <div class="toast-body">
-      <div class="toast-title">${title}</div>
-      ${message ? `<div class="toast-msg">${message}</div>` : ''}
-    </div>
-  `;
-
-  container.appendChild(toast);
-
-  setTimeout(() => {
-    toast.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
-    toast.style.opacity = '0';
-    toast.style.transform = 'translateX(100%)';
-    setTimeout(() => toast.remove(), 300);
-  }, duration);
-}
-
-// Format currency (Philippine Peso)
+// ─── Formatting helpers ─────────────────────────────────────
 function formatPHP(amount) {
   const num = parseFloat(amount) || 0;
   return '₱' + num.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-// Format date
 function formatDate(dateStr) {
   if (!dateStr) return '—';
-  return new Date(dateStr).toLocaleString('en-PH', {
-    year: 'numeric', month: 'short', day: 'numeric',
-    hour: '2-digit', minute: '2-digit'
-  });
+  try {
+    return new Date(dateStr).toLocaleString('en-PH', {
+      month: 'short', day: 'numeric', year: 'numeric',
+      hour: '2-digit', minute: '2-digit'
+    });
+  } catch {
+    return dateStr;
+  }
 }
 
-// Format countdown
-function formatCountdown(seconds) {
-  const m = Math.floor(seconds / 60);
-  const s = seconds % 60;
-  return m > 0 ? `${m}m ${s}s` : `${s}s`;
-}
+// ─── Toast notifications ────────────────────────────────────
+function showToast(title, message, type = 'info') {
+  const container = document.getElementById('toast-container');
+  if (!container) return;
 
-// Logout
-function logout() {
-  clearToken();
-  window.location.href = '/auth/login.html';
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <div class="toast-title">${title}</div>
+    <div class="toast-msg">${message}</div>
+  `;
+  container.appendChild(toast);
+
+  setTimeout(() => toast.classList.add('show'), 10);
+  setTimeout(() => {
+    toast.classList.remove('show');
+    setTimeout(() => toast.remove(), 300);
+  }, 4000);
 }
