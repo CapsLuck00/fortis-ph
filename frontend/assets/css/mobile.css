@@ -1,0 +1,229 @@
+/* ═══════════════════════════════════════════════════════════════
+   mobile.css — FortisPH
+   1. Page-enter fade  (kills zoom-flash on navigation)
+   2. Hamburger button
+   3. Sidebar off-canvas drawer
+   4. Full responsive layout ≤ 768px
+   ═══════════════════════════════════════════════════════════════ */
+
+/* ── 1. PAGE ENTER — smooth fade, no zoom flash ──────────────── */
+@keyframes _pageEnter {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+html { animation: _pageEnter 0.13s ease; }
+
+/* ── 2. HAMBURGER BUTTON ─────────────────────────────────────── */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  background: none;
+  border: none;
+  border-right: 1px solid var(--border, #1f2937);
+  color: var(--text, #f9fafb);
+  cursor: pointer;
+  flex-shrink: 0;
+  font-size: 20px;
+  line-height: 1;
+  padding: 0;
+  order: -1;
+}
+.hamburger-btn:hover { background: rgba(255,255,255,0.05); }
+
+/* ── 3. SIDEBAR OVERLAY ──────────────────────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 299;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.sidebar-overlay.mob-open { display: block; }
+
+/* ═══════════════════════════════════════════════════════════════
+   4. RESPONSIVE — max-width 768px
+   ═══════════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* Show hamburger */
+  .hamburger-btn { display: flex; }
+
+  /* ── TICKER BAR ── */
+  .ticker-items {
+    overflow-x: auto !important;
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+  .ticker-items::-webkit-scrollbar { display: none; }
+  .t-name { display: none !important; }
+  .ticker-item { padding: 0 10px !important; gap: 4px !important; }
+  .ticker-user { gap: 6px !important; padding: 0 10px !important; }
+  .u-name, .u-badge { display: none !important; }
+  .ticker-avatar { width: 28px !important; height: 28px !important; }
+  .ticker-brand { padding: 0 10px !important; font-size: 12px !important; }
+
+  /* ── SIDEBAR: OFF-CANVAS DRAWER ── */
+  #sidebar {
+    position: fixed !important;
+    top: 0 !important;
+    left: -260px !important;
+    bottom: 0 !important;
+    width: 240px !important;
+    z-index: 300 !important;
+    transition: left 0.25s cubic-bezier(0.4,0,0.2,1) !important;
+    overflow-y: auto !important;
+    box-shadow: 4px 0 30px rgba(0,0,0,0.6) !important;
+  }
+  #sidebar.mob-open { left: 0 !important; }
+
+  /* ── APP LAYOUT ── */
+  #app {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+  }
+  #main {
+    flex: 1 1 auto !important;
+    width: 100% !important;
+    overflow-y: auto !important;
+    padding: 12px !important;
+  }
+
+  /* Hide right sidebar (dashboard index news feed) */
+  #right-sidebar { display: none !important; }
+
+  /* ── CONTENT PADDING ── */
+  #content { padding: 12px !important; gap: 12px !important; }
+
+  /* ── DASHBOARD INDEX: wallet row ── */
+  #wallets-row {
+    grid-template-columns: 1fr !important;
+  }
+  .traders-grid {
+    grid-template-columns: 1fr !important;
+  }
+  #interest-ticker {
+    flex-direction: column !important;
+    gap: 6px !important;
+    align-items: flex-start !important;
+  }
+
+  /* ── WALLET PAGE ── */
+  .wallet-cards {
+    grid-template-columns: 1fr !important;
+  }
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── TRADE PAGE ── */
+  .trade-layout {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto !important;
+  }
+  #price-chart-wrap { height: 220px !important; }
+  .chart-wrap { height: 220px !important; }
+
+  /* ── MARKETS PAGE ── */
+  .markets-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── COPY TRADING ── */
+  .trader-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── ANALYTICS PAGE ── */
+  .kpi-row {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── DEPOSIT / WITHDRAW ── */
+  .two-col {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+  .method-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+
+  /* ── SETTINGS PAGE ── */
+  .settings-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── EDUCATION PAGE ── */
+  .lesson-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── TABLES: horizontal scroll ── */
+  .tbl-wrap {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  .tbl-wrap table { min-width: 520px; }
+
+  /* ── LARGE BALANCE NUMBERS ── */
+  .wallet-amount,
+  #w-main,
+  #balance-display,
+  .bal-main {
+    font-size: 26px !important;
+  }
+
+  /* ── ADMIN: stats grid ── */
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+  .providers-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── MISC ── */
+  .card { border-radius: 8px !important; }
+}
+
+/* ── EXTRA SMALL: phones < 420px ── */
+@media (max-width: 420px) {
+  .kpi-row { grid-template-columns: 1fr !important; }
+  .lesson-grid { grid-template-columns: 1fr !important; }
+  .method-grid { grid-template-columns: repeat(2, 1fr) !important; }
+  .stats-grid { grid-template-columns: 1fr !important; }
+  .wallet-amount, #w-main { font-size: 22px !important; }
+}
+
+/* ── DASHBOARD INDEX specific overrides ── */
+@media (max-width: 768px) {
+  /* Body scroll must be enabled when sidebar closed */
+  html, body { overflow: auto !important; }
+
+  #main {
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: auto !important;
+    width: 100% !important;
+  }
+
+  #content {
+    padding: 10px !important;
+    gap: 10px !important;
+    overflow: visible !important;
+    min-width: 0 !important;
+  }
+
+  /* Ticker height reduce */
+  #ticker-bar { height: 44px !important; }
+
+  /* Sidebar must be fixed above ticker on mobile */
+  #sidebar { padding-top: 0 !important; }
+}

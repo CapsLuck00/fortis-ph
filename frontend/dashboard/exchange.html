@@ -37,6 +37,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-
 @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
 </style>
+<link rel="stylesheet" href="/assets/css/mobile.css">
 </head>
 <body>
 <div id="ticker-bar">
@@ -97,5 +98,6 @@ async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)r
 async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='\u20b1'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 loadTicker();loadDashMini();setInterval(loadTicker,8000);</script>
+<script src="/assets/js/mobile.js"></script>
 </body>
 </html>

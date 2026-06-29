@@ -70,6 +70,7 @@ tr:hover td{background:rgba(255,255,255,0.02)}
 .mc-stat:last-child{border-right:none}
 .mc-stat-val{font-size:13px;font-weight:700}.mc-stat-label{font-size:10px;color:var(--muted);margin-top:2px}
 </style>
+<link rel="stylesheet" href="/assets/css/mobile.css">
 </head>
 <body>
 <div id="ticker-bar">
@@ -136,5 +137,6 @@ async function loadMarkets(){
 loadMarkets();
 setInterval(()=>{document.querySelectorAll('.mc-price').forEach(el=>{const v=parseFloat(el.textContent.replace(/[^\d.]/g,''));if(v){const nv=v+(Math.random()-.5)*.5;el.textContent='₱'+nv.toFixed(2);}});},5000);
 </script>
+<script src="/assets/js/mobile.js"></script>
 </body>
 </html>
