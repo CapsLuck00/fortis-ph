@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Deposit — FortisPH</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+  <style>
+    .payment-instructions { background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 18px; margin-top: 16px; font-size: 14px; }
+    .payment-instructions h4 { color: var(--accent-gold); margin-bottom: 10px; }
+    .payment-instructions p { color: var(--text-secondary); margin-bottom: 6px; }
+    .payment-instructions .account-num { font-size: 18px; font-weight: 700; color: var(--text-primary); letter-spacing: 1px; margin: 4px 0 10px; }
+    .success-card { text-align: center; padding: 40px 24px; }
+    .success-icon { font-size: 56px; margin-bottom: 16px; }
+    .success-ref { background: var(--bg-surface-2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; margin-top: 16px; font-family: monospace; font-size: 16px; color: var(--accent-gold); letter-spacing: 1px; }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Member Portal</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/dashboard/deposit.html" class="active"><span class="nav-icon">💰</span> Deposit</a>
+        <a href="/dashboard/withdraw.html"><span class="nav-icon">💸</span> Withdraw</a>
+        <a href="/dashboard/history.html"><span class="nav-icon">📜</span> History</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">Deposit Funds</div>
+      </header>
+
+      <div class="page-body">
+        <div class="grid-2" style="max-width: 900px;">
+          <!-- Deposit Form -->
+          <div class="card" id="deposit-form-card">
+            <h3 class="section-title">New Deposit Request</h3>
+
+            <div id="form-error" class="alert alert-error" style="display:none;"></div>
+
+            <form id="deposit-form">
+              <div class="form-group">
+                <label for="amount">Amount (₱)</label>
+                <input type="number" id="amount" class="form-control" placeholder="Enter deposit amount" min="100" step="50" required />
+              </div>
+
+              <div class="form-group">
+                <label for="payment-method">Payment Method</label>
+                <select id="payment-method" class="form-control" required>
+                  <option value="">Select payment method</option>
+                  <option value="GCash">GCash</option>
+                  <option value="Maya">Maya</option>
+                  <option value="Online Banking">Online Banking (BDO)</option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label for="account-name">Your Account Name</label>
+                <input type="text" id="account-name" class="form-control" placeholder="Name on your GCash/Maya/Bank" required />
+              </div>
+
+              <div class="form-group">
+                <label for="reference-code">Reference / Transaction Number</label>
+                <input type="text" id="reference-code" class="form-control" placeholder="e.g. 1234567890" required />
+              </div>
+
+              <!-- Payment Instructions -->
+              <div id="payment-instructions" class="payment-instructions" style="display:none;"></div>
+
+              <button type="submit" class="btn btn-primary btn-full" id="deposit-btn" style="margin-top: 16px;">
+                💰 Submit Deposit Request
+              </button>
+            </form>
+          </div>
+
+          <!-- Info Card -->
+          <div>
+            <div class="card" style="margin-bottom: 16px;">
+              <h4 class="section-title">How Deposits Work</h4>
+              <ol style="padding-left: 20px; color: var(--text-secondary); font-size: 14px; line-height: 1.9;">
+                <li>Select your payment method above</li>
+                <li>Send the amount to our account below</li>
+                <li>Enter the reference number from your transaction</li>
+                <li>Admin will approve within 5–30 minutes</li>
+                <li>Balance is credited instantly upon approval</li>
+              </ol>
+            </div>
+            <div class="card">
+              <h4 class="section-title">Minimum Deposit</h4>
+              <div class="card-value gold">₱100</div>
+              <p style="font-size: 13px; color: var(--text-muted); margin-top: 6px;">Minimum deposit per transaction</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Success State (hidden by default) -->
+        <div class="card" id="success-card" style="display:none; max-width: 520px; margin: 0 auto;">
+          <div class="success-card">
+            <div class="success-icon">✅</div>
+            <h3 style="font-size: 22px; font-weight: 700; margin-bottom: 8px;">Deposit Submitted!</h3>
+            <p style="color: var(--text-muted);">Your deposit request is now pending admin approval. You'll be notified once approved.</p>
+            <div class="success-ref" id="success-ref"></div>
+            <div style="margin-top: 24px; display: flex; gap: 12px; justify-content: center;">
+              <a href="/dashboard/index.html" class="btn btn-primary">Go to Dashboard</a>
+              <button class="btn btn-ghost" onclick="resetForm()">New Deposit</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/assets/js/api.js"></script>
+  <script>
+    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    const paymentDetails = {
+      'GCash': { icon: '📱', lines: ['Send to GCash number:', '0917 234 5678', 'Account Name: FortisPH'] },
+      'Maya': { icon: '💳', lines: ['Send to Maya number:', '0908 765 4321', 'Account Name: FortisPH'] },
+      'Online Banking': { icon: '🏦', lines: ['BDO Savings Account:', '0012 3456 7890', 'Account Name: FortisPH Corp'] }
+    };
+
+    document.getElementById('payment-method').addEventListener('change', function() {
+      const method = this.value;
+      const instructionsEl = document.getElementById('payment-instructions');
+      if (!method) { instructionsEl.style.display = 'none'; return; }
+
+      const details = paymentDetails[method];
+      instructionsEl.style.display = 'block';
+      instructionsEl.innerHTML = `
+        <h4>${details.icon} Send to this ${method} account:</h4>
+        ${details.lines.map((l, i) => i === 1
+          ? `<div class="account-num">${l}</div>`
+          : `<p>${l}</p>`
+        ).join('')}
+        <p style="margin-top: 10px; color: var(--accent-gold);">⚠️ Screenshot your transaction and save the reference number before submitting.</p>
+      `;
+    });
+
+    document.getElementById('deposit-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const errorEl = document.getElementById('form-error');
+      errorEl.style.display = 'none';
+
+      const amount = parseFloat(document.getElementById('amount').value);
+      const payment_method = document.getElementById('payment-method').value;
+      const account_name = document.getElementById('account-name').value.trim();
+      const reference_code = document.getElementById('reference-code').value.trim();
+
+      if (amount < 100) { errorEl.textContent = 'Minimum deposit is ₱100'; errorEl.style.display = 'flex'; return; }
+
+      const btn = document.getElementById('deposit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Submitting...';
+
+      const res = await apiFetch('/api/member/deposit', 'POST', { amount, payment_method, account_name, reference_code });
+
+      if (res && res.ok) {
+        document.getElementById('deposit-form-card').style.display = 'none';
+        document.getElementById('success-card').style.display = 'block';
+        document.getElementById('success-ref').textContent = 'Reference: ' + res.data.reference;
+      } else {
+        errorEl.textContent = res?.data?.error || 'Submission failed. Try again.';
+        errorEl.style.display = 'flex';
+        btn.disabled = false;
+        btn.textContent = '💰 Submit Deposit Request';
+      }
+    });
+
+    function resetForm() {
+      document.getElementById('deposit-form').reset();
+      document.getElementById('payment-instructions').style.display = 'none';
+      document.getElementById('success-card').style.display = 'none';
+      document.getElementById('deposit-form-card').style.display = 'block';
+      document.getElementById('deposit-btn').disabled = false;
+      document.getElementById('deposit-btn').textContent = '💰 Submit Deposit Request';
+    }
+  </script>
+</body>
+</html>
