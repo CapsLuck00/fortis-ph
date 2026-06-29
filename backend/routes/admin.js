@@ -1,17 +1,107 @@
 const express = require('express');
 const router = express.Router();
 const supabase = require('../db/supabase');
-const { authMiddleware, adminMiddleware } = require('../middleware/auth');
-router.use(authMiddleware);
-router.use(adminMiddleware);
-router.get('/stats',async(req,res)=>{try{const[usersRes,depositsRes,withdrawalsRes,tradesRes,balanceRes]=await Promise.all([supabase.from('users').select('id',{count:'exact'}).eq('role','member'),supabase.from('transactions').select('amount').eq('type','deposit').eq('status','approved'),supabase.from('transactions').select('amount').eq('type','withdrawal').eq('status','approved'),supabase.from('trades').select('id',{count:'exact'}).eq('result','pending'),supabase.from('users').select('balance')]);const totalDeposits=(depositsRes.data||[]).reduce((s,t)=>s+apseFloat(t.amount),0);const totalWithdrawals=(withdrawalsRes.data||[]).reduce((s,t)=>s+parseFloat(t.amount),0);const totalBalance=(balanceRes.data||[]).reduce((s,u)=>s+parseFloat(u.balance),0);return res.json({total_users:usersRes.count||0,total_deposits:totalDeposits,total_withdrawals:totalWithdrawals,pending_trades:tradesRes.count||0,total_platform_balance:totalBalance});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.get('/users',async(req,res)=>{try{const{data:users,error}=await supabase.from('users').select('id,username,email,balance,total_invested,role,is_active,created_at').order('created_at',{ascending:false});if(error)return res.status(500).json({error:'Failed to fetch users'});return res.json({users:users||[]});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/users/:id/adjust-balance',async(req,res)=>{try{const{id}=req.params;const{amount,note}=req.body;if(amount===undefined||amount===null)return res.status(400).json({error:'Amount is required'});const{data:user}=await supabase.from('users').select('balance').eq('id',id).single();if(!user)return res.status(404).json({error:'User not found'});const adjustAmount=parseFloat(amount);const newBalance=parseFloat(user.balance)+adjustAmount;if(newBalance<0)return res.status(400).json({error:'Would result in negative balance'});await supabase.from('users').update({balance:newBalance}).eq('id',id);await supabase.from('transactions').insert({user_id:id,type:adjustAmount>=0?'deposit':'withdrawal',amount:Math.abs(adjustAmount),status:'approved',notes:`Admin adjustment: ${note||'Manual balance update'}`,reference_code:`AJI-${Date.now()}`});return res.json({message:'Balance adjusted',new_balance:newBalance});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/users/:id/toggle-active',async(req,res)=>{try{const{id}=req.params;const{data:user}=await supabase.from('users').select('is_active').eq('id',id).single();if(!user)return res.status(404).json({error:'User not found'});await supabase.from('users').update({is_active:!user.is_active}).eq('id',id);return res.json({message:'User status updated',is_active:!user.is_active});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.get('/transactions',async(req,res)=>{try{const{status,type}=req.query;let query=supabase.from('transactions').select('*,users(username,email)').order('created_at',{ascending:false});if(status)query=query.eq('status',status);if(type)query=query.eq('type',type);const{data:transactions,error}=await query;if(error)return res.status(500).json({error:'Failed to fetch'});return res.json({transactions:transactions||[]});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/transactions/:id/approve',async(req,res)=>{try{const{id}=req.params;const{data:tx}=await supabase.from('transactions').select('*').eq('id',id).single();if(!tx)return res.status(404).json({error:'Transaction not found'});if(tx.status!=='pending')return res.status(400).json({error:'Already processed'});await supabase.from('transactions').update({status:'approved'}).eq('id',id);const{data:user}=await supabase.from('users').select('balance').eq('id',tx.user_id).single();if(tx.type==='deposit')await supabase.from('users').update({balance:parseFloat(user.balance)+parseFloat(tx.amount)}).eq('id',tx.user_id);else if(tx.type==='withdrawal'){const newBal=parseFloat(user.balance)-parseFloat(tx.amount);if(newBal<0)  return res.status(400).json({error:'Insufficient balance'});await supabase.from('users').update({balance:newBal}).eq('id',tx.user_id);}return res.json({message:'Transaction approved'});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/transactions/:id/reject',async(req,res)=>{try{const{id}=req.params;const{data:tx}=await supabase.from('transactions').select('id,status').eq('id',id).single();if(!tx)return res.status(404).json({error:'Not found'});if(tx.status!=='pending')return res.status(400).json({error:'Already processed'});await supabase.from('transactions').update({status:'rejected',notes:`wait req.body.reason||'Rejected by admin'`}).eq('id',id);return res.json({message:'Rejected'});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/chart/push',async(req,res)=>{try{const{provider_id,direction,open,close,high,low}=req.body;if(!provider_id||!direction)return res.status(400).json({error:'provider_id and direction required'});if(!['up','down','flat'].includes(direction))return res.status(400).json({error:'Invalid direction'});const{data:provider}=await supabase.from('game_providers').select('current_price').eq('id',provider_id).single();if(!provider)return res.status(404).json({error:'Provider not found'});const cp=parseFloat(provider.current_price);let ohlc={open,cnose,high,low};if(!open||!close||!high||!low){ohlc.open=cp;if(direction==='up')ohlc.close=cp*(1+(Math.random()*0.015+0.003));else if(direction==='down')ohlc.close=cp*(1-(Math.random()*0.015+0.003));else ohlc.close=cp*(1+(Math.random()*0.002-0.001));ohlc.high=Math.max(ohlc.open,ohlc.close)*(1+Math.random()*0.002);olhc.low=Math.min(ohlc.open,ohlc.close)*(1-Math.random()*0.002);}const{data:queued,error}=await supabase.from('admin_chart_control').insert({provider_id,direction,next_open:parseFloat(ohlc.open),next_close:parseFloat(ohlc.close),next_high:parseFloat(ohlc.high),next_low:parseFloat(ohlc.low),is_queued:true,created_by:req.user.id}).select().single();if(error)return res.status(500).json({error:'Failed to queue'});return res.status(201).json({message:'Candle queued',candle:queued});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.get('/chart/queue',async(req,res)=>{try{const{data:queue}=await supabase.from('admin_chart_control').select('*,game_providers(name,slug)').eq('is_queued',true).order('created_at',{ascending:true});return res.json({queue:queue||[]});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-router.post('/interest/config',async(req,res)=>{try{const{rate_per_second}=req.body;if(!rate_per_second||isNaN(rate_per_second)||parseFloat(rate_per_second)<0) return res.status(400).json({error:'Valid rate required'});const rate=parseFloat(rate_per_second);await supabase.from('interest_config').insert({rate_per_second:rate,updated_by:req.user.id});await supabase.from('users').update({interest_rate_per_second:rate}).eq('role','member');return res.json({message:'Interest rate updated',rate_per_second:rate});}catch(err){return res.status(500).json({error:'Internal server error'});}});
-module.exports=router;
+const jwt = require('jsonwebtoken');
+
+const JWT_SECRET = process.env.JWT_SECRET;
+
+const adminAuth = (req, res, next) => {
+  try {
+    const authHeader = req.headers['authorization'];
+    if (!authHeader) return res.status(401).json({ error: 'No token provided' });
+    const token = authHeader.split(' ')[1];
+    const decoded = jwt.verify(token, JWT_SECRET);
+    if (decoded.role !== 'admin') return res.status(403).json({ error: 'Admin access required' });
+    req.user = decoded;
+    next();
+  } catch (err) {
+    res.status(401).json({ error: 'Invalid or expired token' });
+  }
+};
+
+router.get('/stats', adminAuth, async (req, res) => {
+  try {
+    const { count: totalMembers } = await supabase.from('members').select('*', { count: 'exact', head: true });
+    const { data: balData } = await supabase.from('members').select('balance');
+    const totalBalance = (balData || []).reduce((sum, m) => sum + parseFloat(m.balance || 0), 0);
+    const { count: pendingDeposits } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'deposit').eq('status', 'pending');
+    const { count: pendingWithdrawals } = await supabase.from('transactions').select('*', { count: 'exact', head: true }).eq('type', 'withdrawal').eq('status', 'pending');
+    const { count: activeTrades } = await supabase.from('trades').select('*', { count: 'exact', head: true }).eq('result', 'pending');
+    res.json({ ok: true, data: { totalMembers, totalBalance, pendingDeposits, pendingWithdrawals, activeTrades } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/members', adminAuth, async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
+    const { data, count } = await supabase.from('members').select('id, username, email, balance, is_active, created_at, referral_code', { count: 'exact' }).order('created_at', { ascending: false }).range(offset, offset + limit - 1);
+    res.json({ ok: true, data: { members: data || [], total: count, page, limit } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.patch('/members/:id', adminAuth, async (req, res) => {
+  try {
+    const { is_active, balance } = req.body;
+    const updates = {};
+    if (typeof is_active !== 'undefined') updates.is_active = is_active;
+    if (typeof balance !== 'undefined') updates.balance = balance;
+    const { data, error } = await supabase.from('members').update(updates).eq('id', req.params.id).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/transactions', adminAuth, async (req, res) => {
+  try {
+    const { type, status } = req.query;
+    let query = supabase.from('transactions').select('*, members(username, email)').order('created_at', { ascending: false }).limit(50);
+    if (type) query = query.eq('type', type);
+    if (status) query = query.eq('status', status);
+    const { data, error } = await query;
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data: { transactions: data || [] } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.patch('/transactions/:id', adminAuth, async (req, res) => {
+  try {
+    const { status, admin_note } = req.body;
+    const { data: txn } = await supabase.from('transactions').select('*').eq('id', req.params.id).single();
+    if (!txn) return res.status(404).json({ error: 'Transaction not found' });
+    if (status === 'approved' && txn.type === 'deposit' && txn.status === 'pending') {
+      const { data: member } = await supabase.from('members').select('balance').eq('id', txn.member_id).single();
+      await supabase.from('members').update({ balance: parseFloat(member.balance) + parseFloat(txn.amount) }).eq('id', txn.member_id);
+    }
+    if (status === 'rejected' && txn.type === 'withdrawal' && txn.status === 'pending') {
+      const { data: member } = await supabase.from('members').select('balance').eq('id', txn.member_id).single();
+      await supabase.from('members').update({ balance: parseFloat(member.balance) + parseFloat(txn.amount) }).eq('id', txn.member_id);
+    }
+    const { data, error } = await supabase.from('transactions').update({ status, admin_note }).eq('id', req.params.id).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.get('/chart-providers', adminAuth, async (req, res) => {
+  try {
+    const { data } = await supabase.from('game_providers').select('*');
+    res.json({ ok: true, data: { providers: data || [] } });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+router.patch('/chart-providers/:id', adminAuth, async (req, res) => {
+  try {
+    const { current_price, is_active, win_rate } = req.body;
+    const updates = {};
+    if (typeof current_price !== 'undefined') updates.current_price = current_price;
+    if (typeof is_active !== 'undefined') updates.is_active = is_active;
+    if (typeof win_rate !== 'undefined') updates.win_rate = win_rate;
+    const { data, error } = await supabase.from('game_providers').update(updates).eq('id', req.params.id).select().single();
+    if (error) return res.status(500).json({ error: error.message });
+    res.json({ ok: true, data });
+  } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+module.exports = router;
