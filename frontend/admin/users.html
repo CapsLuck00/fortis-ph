@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Users — FortisPH Admin</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Admin Panel</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/admin/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/admin/chart.html"><span class="nav-icon">📈</span> Chart Control</a>
+        <a href="/admin/users.html" class="active"><span class="nav-icon">👥</span> Users</a>
+        <a href="/admin/transactions.html"><span class="nav-icon">💳</span> Transactions</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">User Management</div>
+        <div class="topbar-right">
+          <button class="btn btn-ghost btn-sm" onclick="loadUsers()">🔄 Refresh</button>
+        </div>
+      </header>
+
+      <div class="page-body">
+        <!-- Search -->
+        <div class="search-input-wrap" style="max-width:400px; margin-bottom:20px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" class="form-control" id="user-search" placeholder="Search by username or email..." oninput="filterUsers()" />
+        </div>
+
+        <!-- Users Table -->
+        <div class="card">
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Username</th>
+                  <th>Email</th>
+                  <th>Balance</th>
+                  <th>Role</th>
+                  <th>Status</th>
+                  <th>Joined</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="users-tbody">
+                <tr><td colspan="7" style="text-align:center; color:var(--text-muted); padding:32px;">Loading...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- User Detail Modal -->
+  <div class="modal-overlay hidden" id="user-modal">
+    <div class="modal" style="max-width: 700px;">
+      <div class="modal-header">
+        <div class="modal-title">User Detail — <span id="modal-username"></span></div>
+        <button class="modal-close" onclick="closeUserModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- Stats Row -->
+        <div class="stats-grid" style="grid-template-columns: repeat(3,1fr); margin-bottom:20px;" id="modal-stats"></div>
+
+        <!-- Adjust Balance -->
+        <div class="card card-sm" style="margin-bottom: 20px;">
+          <h4 class="section-title">Adjust Balance</h4>
+          <div style="display: flex; gap: 10px; align-items: flex-end;">
+            <div class="form-group" style="flex:1; margin:0;">
+              <label>Amount (positive to add, negative to subtract)</label>
+              <input type="number" id="adjust-amount" class="form-control" placeholder="e.g. 500 or -200" step="50" />
+            </div>
+            <div class="form-group" style="flex:1; margin:0;">
+              <label>Note</label>
+              <input type="text" id="adjust-note" class="form-control" placeholder="Reason for adjustment" />
+            </div>
+            <button class="btn btn-primary" onclick="adjustBalance()" style="margin-bottom:1px;">Apply</button>
+          </div>
+        </div>
+
+        <!-- Tabs: Transactions & Trades -->
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="modal-tx">Last Transactions</button>
+          <button class="tab-btn" data-tab="modal-trades">Last Trades</button>
+        </div>
+        <div class="tab-panel active" id="tab-modal-tx">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Date</th><th>Type</th><th>Amount</th><th>Status</th></tr></thead>
+              <tbody id="modal-tx-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="tab-panel" id="tab-modal-trades">
+          <div class="table-wrap">
+            <table class="table">
+              <thead><tr><th>Date</th><th>Provider</th><th>Direction</th><th>Stake</th><th>Result</th><th>Payout</th></tr></thead>
+              <tbody id="modal-trades-tbody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-ghost" onclick="closeUserModal()">Close</button>
+        <button class="btn btn-danger btn-sm" id="toggle-active-btn" onclick="toggleUserActive()">Deactivate</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/assets/js/api.js"></script>
+  <script>
+    if (!redirectIfNotAdmin()) throw new Error('Not admin');
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    let allUsers = [];
+    let selectedUserId = null;
+    let selectedUserActive = true;
+
+    // Tabs in modal
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    async function loadUsers() {
+      const res = await apiFetch('/api/admin/users');
+      if (!res || !res.ok) return;
+      allUsers = res.data.users || [];
+      renderUsers(allUsers);
+    }
+
+    function filterUsers() {
+      const q = document.getElementById('user-search').value.toLowerCase();
+      if (!q) { renderUsers(allUsers); return; }
+      const filtered = allUsers.filter(u => u.username.toLowerCase().includes(q) || u.email.toLowerCase().includes(q));
+      renderUsers(filtered);
+    }
+
+    function renderUsers(users) {
+      const tbody = document.getElementById('users-tbody');
+      if (!users.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-muted);padding:32px;">No users found</td></tr>';
+        return;
+      }
+      tbody.innerHTML = users.map(u => `
+        <tr>
+          <td class="primary">${u.username}</td>
+          <td style="color:var(--text-muted); font-size:13px;">${u.email}</td>
+          <td class="primary">${formatPHP(u.balance)}</td>
+          <td><span class="badge badge-${u.role}">${u.role.toUpperCase()}</span></td>
+          <td><span class="badge ${u.is_active ? 'badge-approved' : 'badge-rejected'}">${u.is_active ? 'Active' : 'Inactive'}</span></td>
+          <td style="font-size:12px; color:var(--text-muted);">${formatDate(u.created_at)}</td>
+          <td><button class="btn btn-ghost btn-sm" onclick="openUserModal('${u.id}')">View</button></td>
+        </tr>
+      `).join('');
+    }
+
+    async function openUserModal(userId) {
+      selectedUserId = userId;
+      const res = await apiFetch(`/api/admin/users/${userId}`);
+      if (!res || !res.ok) { showToast('Error', 'Failed to load user', 'error'); return; }
+
+      const { user: u, transactions, trades } = res.data;
+      selectedUserActive = u.is_active;
+
+      document.getElementById('modal-username').textContent = u.username;
+      document.getElementById('modal-stats').innerHTML = `
+        <div class="card card-sm"><div class="card-title">Balance</div><div class="card-value gold" style="font-size:20px;">${formatPHP(u.balance)}</div></div>
+        <div class="card card-sm"><div class="card-title">Invested</div><div class="card-value" style="font-size:20px;">${formatPHP(u.total_invested)}</div></div>
+        <div class="card card-sm"><div class="card-title">Joined</div><div class="card-value" style="font-size:14px; margin-top:4px;">${formatDate(u.created_at)}</div></div>
+      `;
+
+      // Toggle button
+      const toggleBtn = document.getElementById('toggle-active-btn');
+      toggleBtn.textContent = u.is_active ? 'Deactivate User' : 'Activate User';
+      toggleBtn.className = u.is_active ? 'btn btn-danger btn-sm' : 'btn btn-success btn-sm';
+
+      // Transactions
+      document.getElementById('modal-tx-tbody').innerHTML = transactions.length
+        ? transactions.map(t => `<tr>
+            <td>${formatDate(t.created_at)}</td>
+            <td><span class="badge badge-${t.type}">${t.type.replace('_',' ').toUpperCase()}</span></td>
+            <td class="primary">${formatPHP(t.amount)}</td>
+            <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
+          </tr>`).join('')
+        : '<tr><td colspan="4" style="text-align:center;color:var(--text-muted);">No transactions</td></tr>';
+
+      // Trades
+      document.getElementById('modal-trades-tbody').innerHTML = trades.length
+        ? trades.map(t => `<tr>
+            <td>${formatDate(t.trade_open_at)}</td>
+            <td>${t.game_providers?.name || '—'}</td>
+            <td><span class="badge badge-${t.direction}">${t.direction.toUpperCase()}</span></td>
+            <td>${formatPHP(t.stake)}</td>
+            <td><span class="badge badge-${t.result}">${t.result.toUpperCase()}</span></td>
+            <td style="color:${t.result==='win'?'var(--accent-green)':'var(--text-muted)'};">${t.result==='win'?'+'+formatPHP(t.payout_amount):'—'}</td>
+          </tr>`).join('')
+        : '<tr><td colspan="6" style="text-align:center;color:var(--text-muted);">No trades</td></tr>';
+
+      document.getElementById('user-modal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('user-modal').classList.add('hidden');
+      selectedUserId = null;
+    }
+
+    async function adjustBalance() {
+      if (!selectedUserId) return;
+      const amount = parseFloat(document.getElementById('adjust-amount').value);
+      const note = document.getElementById('adjust-note').value.trim();
+
+      if (isNaN(amount)) { showToast('Error', 'Enter a valid amount', 'error'); return; }
+
+      const res = await apiFetch(`/api/admin/users/${selectedUserId}/adjust-balance`, 'POST', { amount, note });
+      if (res && res.ok) {
+        showToast('Balance Updated', `New balance: ${formatPHP(res.data.new_balance)}`, 'success');
+        document.getElementById('adjust-amount').value = '';
+        document.getElementById('adjust-note').value = '';
+        openUserModal(selectedUserId);
+        loadUsers();
+      } else {
+        showToast('Error', res?.data?.error || 'Failed to adjust', 'error');
+      }
+    }
+
+    async function toggleUserActive() {
+      if (!selectedUserId) return;
+      const res = await apiFetch(`/api/admin/users/${selectedUserId}/toggle-active`, 'POST');
+      if (res && res.ok) {
+        showToast('Updated', `User is now ${res.data.is_active ? 'active' : 'inactive'}`, 'success');
+        openUserModal(selectedUserId);
+        loadUsers();
+      } else {
+        showToast('Error', res?.data?.error || 'Failed to update', 'error');
+      }
+    }
+
+    loadUsers();
+  </script>
+</body>
+</html>
