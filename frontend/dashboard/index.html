@@ -4,309 +4,837 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Dashboard — FortisPH</title>
-  <link rel="stylesheet" href="/assets/css/main.css" />
-  <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
   <style>
-    .balance-card { background: linear-gradient(135deg, #111827 0%, #1a2236 100%); border: 1px solid var(--accent-gold); border-radius: var(--radius-card); padding: 28px; margin-bottom: 20px; }
-    .rate-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.2); border-radius: 20px; padding: 5px 14px; font-size: 13px; color: var(--accent-green); margin-top: 12px; }
-    .rate-badge .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent-green); animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
-    .chart-section { margin-bottom: 20px; }
-    .open-trades-section { margin-top: 20px; }
-    .no-trades { text-align: center; padding: 24px; color: var(--text-muted); font-size: 14px; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #080d18;
+      --bg2:       #0c1220;
+      --bg3:       #111827;
+      --border:    #1f2937;
+      --border2:   rgba(255,255,255,0.06);
+      --text:      #f9fafb;
+      --muted:     #6b7280;
+      --muted2:    #9ca3af;
+      --green:     #10b981;
+      --green-dim: rgba(16,185,129,0.12);
+      --red:       #ef4444;
+      --red-dim:   rgba(239,68,68,0.12);
+      --gold:      #f59e0b;
+      --gold-dim:  rgba(245,158,11,0.12);
+      --blue:      #3b82f6;
+      --blue-dim:  rgba(59,130,246,0.15);
+      --sidebar-w: 200px;
+      --ticker-h:  44px;
+      --radius:    10px;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; overflow: hidden; }
+
+    /* ── TICKER BAR ─────────────────────────────────────── */
+    #ticker-bar {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--ticker-h);
+      background: var(--bg2); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 16px; z-index: 100; gap: 12px;
+    }
+    .ticker-brand { display: flex; align-items: center; gap: 8px; min-width: var(--sidebar-w); }
+    .ticker-brand .logo { font-size: 18px; font-weight: 800; color: var(--gold); letter-spacing: -0.5px; }
+    .ticker-items { display: flex; align-items: center; gap: 28px; overflow: hidden; flex: 1; }
+    .ticker-item { display: flex; align-items: center; gap: 6px; white-space: nowrap; }
+    .ticker-item .t-name { font-weight: 700; font-size: 12px; color: var(--muted2); }
+    .ticker-item .t-price { font-weight: 700; font-size: 13px; color: var(--text); }
+    .ticker-item .t-chg { font-size: 12px; font-weight: 600; }
+    .ticker-item .t-chg.up { color: var(--green); }
+    .ticker-item .t-chg.dn { color: var(--red); }
+    .ticker-user { display: flex; align-items: center; gap: 10px; min-width: 160px; justify-content: flex-end; }
+    .ticker-avatar { width: 32px; height: 32px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--gold)); display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; color: #fff; }
+    .ticker-user-info { text-align: right; }
+    .ticker-user-info .u-name { font-weight: 600; font-size: 13px; line-height: 1; }
+    .ticker-user-info .u-badge { font-size: 10px; color: var(--gold); font-weight: 600; margin-top: 2px; }
+
+    /* ── LAYOUT ─────────────────────────────────────────── */
+    #app { display: flex; height: 100vh; padding-top: var(--ticker-h); }
+
+    /* ── SIDEBAR ────────────────────────────────────────── */
+    #sidebar {
+      width: var(--sidebar-w); min-width: var(--sidebar-w);
+      background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; height: 100%; overflow-y: auto;
+      padding: 16px 0;
+    }
+    .nav-section { padding: 0 10px; margin-bottom: 4px; }
+    .nav-label { font-size: 10px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; padding: 8px 8px 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px; border-radius: 8px; cursor: pointer;
+      color: var(--muted2); font-weight: 500; font-size: 13px;
+      transition: all 0.15s; text-decoration: none; position: relative;
+      margin-bottom: 1px;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: var(--blue-dim); color: var(--blue); }
+    .nav-item .nav-icon { font-size: 15px; width: 18px; text-align: center; }
+    .nav-badge { font-size: 9px; font-weight: 700; background: var(--red); color: #fff; padding: 1px 5px; border-radius: 20px; margin-left: auto; }
+    .nav-badge.new { background: var(--green); }
+    .sidebar-footer { margin-top: auto; padding: 12px 10px 0; border-top: 1px solid var(--border); }
+    .sidebar-user-card { display: flex; align-items: center; gap: 10px; padding: 10px 8px; border-radius: 8px; }
+    .sidebar-user-card .s-name { font-weight: 600; font-size: 13px; }
+    .sidebar-user-card .s-bal { font-size: 11px; color: var(--green); font-weight: 600; margin-top: 1px; }
+
+    /* ── MAIN ───────────────────────────────────────────── */
+    #main { flex: 1; display: flex; gap: 0; overflow: hidden; }
+    #content { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+    #right-sidebar { width: 280px; min-width: 280px; overflow-y: auto; border-left: 1px solid var(--border); padding: 14px; display: flex; flex-direction: column; gap: 14px; background: var(--bg2); }
+
+    /* ── CARDS ──────────────────────────────────────────── */
+    .card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; }
+    .card-sm { padding: 12px 14px; }
+    .section-hdr { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .section-title { font-weight: 700; font-size: 13px; color: var(--text); }
+    .view-all { font-size: 11px; color: var(--blue); cursor: pointer; font-weight: 600; text-decoration: none; }
+    .view-all:hover { text-decoration: underline; }
+
+    /* ── BALANCE CARD ───────────────────────────────────── */
+    #balance-card { background: linear-gradient(135deg, #0f1f3d 0%, #111827 100%); border-color: #1e3a5f; }
+    .bal-label { font-size: 12px; color: var(--muted2); font-weight: 500; display: flex; align-items: center; gap: 6px; }
+    .bal-label .currency-badge { background: var(--bg); border: 1px solid var(--border); border-radius: 6px; padding: 2px 8px; font-size: 11px; font-weight: 700; color: var(--text); cursor: pointer; }
+    .bal-amount { font-size: 38px; font-weight: 800; color: var(--text); letter-spacing: -1px; margin: 8px 0 4px; line-height: 1; }
+    .bal-change { font-size: 13px; font-weight: 600; color: var(--green); }
+    .bal-change.neg { color: var(--red); }
+
+    /* ── WALLETS ROW ────────────────────────────────────── */
+    #wallets-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .wallet-card { border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; border: 1px solid var(--border); position: relative; overflow: hidden; }
+    .wallet-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; }
+    .wallet-main { background: #0f1f3d; }
+    .wallet-main::before { background: linear-gradient(90deg, var(--blue), #8b5cf6); }
+    .wallet-interest { background: #0a1f16; }
+    .wallet-interest::before { background: linear-gradient(90deg, var(--green), #06b6d4); }
+    .wallet-trade { background: #1f1506; }
+    .wallet-trade::before { background: linear-gradient(90deg, var(--gold), var(--red)); }
+    .wallet-icon { width: 34px; height: 34px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; }
+    .wallet-icon.blue { background: var(--blue-dim); }
+    .wallet-icon.green { background: var(--green-dim); }
+    .wallet-icon.gold { background: var(--gold-dim); }
+    .wallet-label { font-size: 11px; color: var(--muted2); font-weight: 500; }
+    .wallet-amount { font-size: 20px; font-weight: 800; color: var(--text); letter-spacing: -0.5px; }
+    .wallet-chg { font-size: 11px; font-weight: 600; }
+    .wallet-chg.up { color: var(--green); }
+    .wallet-chg.dn { color: var(--red); }
+    .wallet-chg.gold { color: var(--gold); }
+
+    /* ── CHART SECTION ──────────────────────────────────── */
+    #chart-section { flex: 1; }
+    .chart-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 14px; }
+    .chart-tab { padding: 8px 14px; font-size: 12px; font-weight: 600; color: var(--muted2); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; white-space: nowrap; }
+    .chart-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+    .chart-tab:hover { color: var(--text); }
+    .period-tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    .period-tab { padding: 4px 10px; font-size: 11px; font-weight: 600; color: var(--muted2); cursor: pointer; border-radius: 6px; transition: all 0.15s; }
+    .period-tab.active { background: var(--blue-dim); color: var(--blue); }
+    .period-tab:hover:not(.active) { color: var(--text); background: var(--border2); }
+    .chart-wrap { position: relative; height: 240px; }
+    .chart-price-label { position: absolute; top: 0; right: 0; background: var(--green); color: #fff; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
+
+    /* ── RIGHT SIDEBAR COMPONENTS ───────────────────────── */
+
+    /* Provider News */
+    .news-item { display: flex; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border2); cursor: pointer; }
+    .news-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .news-logo { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; color: #fff; flex-shrink: 0; }
+    .news-body { flex: 1; min-width: 0; }
+    .news-title { font-size: 12px; font-weight: 600; color: var(--text); line-height: 1.3; margin-bottom: 3px; }
+    .news-sub { font-size: 11px; color: var(--muted); line-height: 1.3; margin-bottom: 3px; }
+    .news-time { font-size: 10px; color: var(--muted); }
+
+    /* Top Providers */
+    .provider-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2); }
+    .provider-row:last-child { border-bottom: none; }
+    .provider-icon { width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 11px; color: #fff; flex-shrink: 0; }
+    .provider-name { flex: 1; }
+    .p-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .p-slug { font-size: 10px; color: var(--muted); font-weight: 600; }
+    .provider-price { text-align: right; }
+    .p-val { font-size: 13px; font-weight: 700; color: var(--text); }
+    .p-chg { font-size: 11px; font-weight: 600; }
+    .p-chg.up { color: var(--green); }
+    .p-chg.dn { color: var(--red); }
+
+    /* Recent Transactions */
+    .tx-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border2); }
+    .tx-row:last-child { border-bottom: none; }
+    .tx-icon { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .tx-icon.deposit { background: var(--green-dim); }
+    .tx-icon.withdrawal { background: var(--red-dim); }
+    .tx-icon.interest { background: var(--blue-dim); }
+    .tx-icon.trade_win { background: var(--green-dim); }
+    .tx-icon.trade_loss { background: var(--red-dim); }
+    .tx-info { flex: 1; min-width: 0; }
+    .tx-type { font-size: 12px; font-weight: 600; color: var(--text); text-transform: capitalize; }
+    .tx-sub { font-size: 10px; color: var(--muted); margin-top: 1px; }
+    .tx-right { text-align: right; }
+    .tx-amount { font-size: 13px; font-weight: 700; }
+    .tx-amount.up { color: var(--green); }
+    .tx-amount.dn { color: var(--red); }
+    .tx-status { font-size: 10px; font-weight: 600; margin-top: 1px; }
+    .tx-status.approved { color: var(--green); }
+    .tx-status.pending { color: var(--gold); }
+    .tx-status.rejected { color: var(--red); }
+
+    /* Live Traders */
+    .traders-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .trader-card { border-radius: 8px; overflow: hidden; position: relative; cursor: pointer; }
+    .trader-thumb { height: 64px; display: flex; align-items: flex-end; padding: 6px; position: relative; }
+    .trader-bg { position: absolute; inset: 0; background: linear-gradient(135deg, #1a1a2e, #16213e); }
+    .live-badge { position: absolute; top: 6px; left: 6px; background: var(--red); color: #fff; font-size: 9px; font-weight: 800; padding: 2px 5px; border-radius: 4px; display: flex; align-items: center; gap: 3px; }
+    .live-badge::before { content: ''; width: 5px; height: 5px; background: #fff; border-radius: 50%; animation: livePulse 1.2s ease-in-out infinite; }
+    @keyframes livePulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+    .viewer-count { position: absolute; top: 6px; right: 6px; font-size: 9px; color: rgba(255,255,255,0.7); font-weight: 600; }
+    .trader-info { position: relative; z-index: 1; display: flex; align-items: center; gap: 5px; }
+    .trader-avatar { width: 20px; height: 20px; border-radius: 50%; background: linear-gradient(135deg, var(--blue), var(--gold)); display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; color: #fff; }
+    .trader-name { font-size: 10px; font-weight: 700; color: #fff; }
+    .trader-gain { font-size: 10px; font-weight: 700; color: var(--green); margin-left: auto; }
+
+    /* Investment Performance */
+    #perf-card { background: linear-gradient(135deg, #0a1f16 0%, #111827 100%); border-color: #14532d; }
+    .perf-label { font-size: 12px; color: var(--muted2); font-weight: 500; margin-bottom: 4px; }
+    .perf-amount { font-size: 28px; font-weight: 800; color: var(--green); letter-spacing: -1px; }
+    .perf-pct { font-size: 13px; color: var(--green); font-weight: 600; margin-bottom: 6px; }
+    .perf-sub { font-size: 11px; color: var(--muted); }
+    .perf-mini-chart { height: 40px; margin-top: 10px; }
+
+    /* ── SCROLLBARS ─────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 4px; height: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+    /* ── LOADING STATES ─────────────────────────────────── */
+    .skeleton { background: linear-gradient(90deg, var(--border) 25%, var(--bg3) 50%, var(--border) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 6px; }
+    @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+    /* ── INTEREST TICKER ────────────────────────────────── */
+    #interest-ticker { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.15); border-radius: 8px; padding: 8px 14px; display: flex; align-items: center; justify-content: space-between; }
+    .int-label { font-size: 11px; color: var(--green); font-weight: 600; }
+    .int-rate { font-size: 13px; color: var(--text); font-weight: 700; }
+    .int-live { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--green); font-weight: 600; }
+    .int-live::before { content: ''; width: 6px; height: 6px; background: var(--green); border-radius: 50%; animation: livePulse 1.5s infinite; }
+
+    /* ── COLORS for provider logos ──────────────────────── */
+    .c-jili      { background: linear-gradient(135deg, #e63946, #c1121f); }
+    .c-evolution { background: linear-gradient(135deg, #023e8a, #0077b6); }
+    .c-pragmatic { background: linear-gradient(135deg, #f77f00, #d62828); }
+    .c-sagaming  { background: linear-gradient(135deg, #2d6a4f, #40916c); }
+    .c-default   { background: linear-gradient(135deg, #4361ee, #3a0ca3); }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <!-- Sidebar -->
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Member Portal</div>
-      </div>
-      <nav class="sidebar-nav">
-        <a href="/dashboard/index.html" class="active"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/dashboard/deposit.html"><span class="nav-icon">💰</span> Deposit</a>
-        <a href="/dashboard/withdraw.html"><span class="nav-icon">💸</span> Withdraw</a>
-        <a href="/dashboard/history.html"><span class="nav-icon">📜</span> History</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
-      </div>
-    </aside>
 
-    <!-- Main Content -->
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">Dashboard</div>
-        <div class="topbar-right">
-          <span style="font-size:13px; color: var(--text-muted);">Balance:</span>
-          <span id="topbar-balance" style="font-weight:700; color: var(--accent-gold);">₱0.00</span>
-        </div>
-      </header>
-
-      <div class="page-body">
-        <!-- Balance Card -->
-        <div class="balance-card">
-          <div class="balance-label">Available Balance</div>
-          <div class="balance-display" id="balance-display">₱0.00</div>
-          <div class="rate-badge">
-            <div class="dot"></div>
-            Earning <span id="rate-display">0.0035%</span> per second
-            &nbsp;·&nbsp; Est. <span id="daily-rate">+₱0.00</span>/day
-          </div>
-        </div>
-
-        <!-- Provider Tabs + Chart -->
-        <div class="card chart-section">
-          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
-            <h3 class="section-title" style="margin:0;">Live Chart</h3>
-            <div>
-              <span style="font-size:13px; color:var(--text-muted);">Price:</span>
-              <span id="current-price" class="price-tag" style="margin-left:6px;">—</span>
-            </div>
-          </div>
-
-          <div class="provider-tabs" id="provider-tabs">
-            <button class="provider-tab active" data-slug="jili">JiLi</button>
-            <button class="provider-tab" data-slug="evolution">Evolution</button>
-            <button class="provider-tab" data-slug="pragmatic">Pragmatic</button>
-            <button class="provider-tab" data-slug="sagaming">SA Gaming</button>
-          </div>
-
-          <div id="chart-container"></div>
-
-          <!-- Trade Form -->
-          <div class="trade-form">
-            <h4 class="section-title" style="margin-bottom:12px;">Place Trade</h4>
-            <div style="margin-bottom:12px;">
-              <label style="font-size:13px; color:var(--text-muted); display:block; margin-bottom:6px;">Duration</label>
-              <div class="duration-options">
-                <button class="duration-btn active" data-sec="30">30s</button>
-                <button class="duration-btn" data-sec="60">1m</button>
-                <button class="duration-btn" data-sec="300">5m</button>
-              </div>
-            </div>
-            <div class="form-group">
-              <label for="stake-input">Stake Amount (₱)</label>
-              <input type="number" id="stake-input" class="form-control" placeholder="Enter stake amount" min="10" step="10" />
-            </div>
-            <div class="trade-buttons">
-              <button class="btn btn-success btn-full" id="btn-up">🟢 BUY UP</button>
-              <button class="btn btn-danger btn-full" id="btn-down">🔴 SELL DOWN</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Open Trades -->
-        <div class="card open-trades-section">
-          <h3 class="section-title">Open Trades</h3>
-          <div id="open-trades-list">
-            <div class="no-trades">No open trades. Place your first trade above!</div>
-          </div>
-        </div>
-      </div>
-    </main>
+<!-- TICKER BAR -->
+<div id="ticker-bar">
+  <div class="ticker-brand">
+    <span class="logo">⚡ FortisPH</span>
   </div>
+  <div class="ticker-items" id="ticker-items">
+    <div class="ticker-item"><span class="t-name">Loading…</span></div>
+  </div>
+  <div class="ticker-user">
+    <div class="ticker-user-info">
+      <div class="u-name" id="ticker-username">—</div>
+      <div class="u-badge">VIP Investor</div>
+    </div>
+    <div class="ticker-avatar" id="ticker-avatar">—</div>
+  </div>
+</div>
 
-  <div id="toast-container"></div>
+<!-- APP -->
+<div id="app">
+  <!-- SIDEBAR -->
+  <aside id="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Main</div>
+      <a href="/dashboard/index.html" class="nav-item active"><span class="nav-icon">📊</span>Dashboard</a>
+      <a href="#" class="nav-item"><span class="nav-icon">👛</span>Wallet</a>
+      <a href="#" class="nav-item"><span class="nav-icon">🔄</span>Exchange</a>
+      <a href="#" class="nav-item"><span class="nav-icon">📈</span>Markets</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Trade</div>
+      <a href="/dashboard/trade.html" class="nav-item"><span class="nav-icon">⚡</span>Trading</a>
+      <a href="#" class="nav-item"><span class="nav-icon">👥</span>Copy Trading<span class="nav-badge new">NEW</span></a>
+      <a href="#" class="nav-item"><span class="nav-icon">📉</span>Analytics</a>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Account</div>
+      <a href="/dashboard/deposit.html" class="nav-item"><span class="nav-icon">💳</span>Deposit</a>
+      <a href="/dashboard/withdraw.html" class="nav-item"><span class="nav-icon">🏦</span>Withdraw</a>
+      <a href="#" class="nav-item"><span class="nav-icon">⚙️</span>Settings</a>
+      <a href="#" class="nav-item"><span class="nav-icon">🎓</span>Education</a>
+    </div>
+    <div class="sidebar-footer">
+      <div class="sidebar-user-card">
+        <div class="ticker-avatar" id="sidebar-avatar" style="width:36px;height:36px;font-size:14px;">—</div>
+        <div>
+          <div class="s-name" id="sidebar-username">—</div>
+          <div class="s-bal" id="sidebar-balance">₱0.00</div>
+        </div>
+      </div>
+      <a href="#" class="nav-item" onclick="logout(); return false;" style="margin-top:4px;color:var(--red);">
+        <span class="nav-icon">🚪</span>Logout
+      </a>
+    </div>
+  </aside>
 
-  <script src="/assets/js/api.js"></script>
-  <script src="/assets/js/interest.js"></script>
-  <script src="/assets/js/chart.js"></script>
-  <script>
-    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
+  <!-- MAIN -->
+  <div id="main">
+    <!-- CENTER CONTENT -->
+    <div id="content">
 
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
+      <!-- INTEREST TICKER -->
+      <div id="interest-ticker">
+        <div>
+          <div class="int-label">💹 Live Interest Accrual</div>
+          <div class="int-rate" id="interest-rate-display">Loading rate…</div>
+        </div>
+        <div class="int-live" id="interest-live-display">Calculating…</div>
+      </div>
 
-    let currentProvider = 'jili';
-    let selectedDuration = 30;
-    let ticker = null;
-    let openTradesData = [];
-    let countdownIntervals = {};
+      <!-- BALANCE CARD -->
+      <div class="card" id="balance-card">
+        <div class="bal-label">
+          Total Balance
+          <span class="currency-badge">PHP ▾</span>
+        </div>
+        <div class="bal-amount" id="bal-amount">₱0.00</div>
+        <div class="bal-change" id="bal-change">+ ₱0.00 (0.00%)</div>
+      </div>
 
-    // Load dashboard data
-    async function loadDashboard() {
-      const res = await apiFetch('/api/member/dashboard');
-      if (!res || !res.ok) return;
+      <!-- WALLETS ROW -->
+      <div id="wallets-row">
+        <div class="wallet-card wallet-main">
+          <div class="wallet-icon blue">💰</div>
+          <div class="wallet-label">Main Wallet</div>
+          <div class="wallet-amount" id="wallet-main">₱0.00</div>
+          <div class="wallet-chg up" id="wallet-main-rate">0.0035%/sec</div>
+        </div>
+        <div class="wallet-card wallet-interest">
+          <div class="wallet-icon green">📈</div>
+          <div class="wallet-label">Interest Earned</div>
+          <div class="wallet-amount" id="wallet-interest">₱0.00</div>
+          <div class="wallet-chg up" id="wallet-interest-chg">+0.00 this month</div>
+        </div>
+        <div class="wallet-card wallet-trade">
+          <div class="wallet-icon gold">⚡</div>
+          <div class="wallet-label">Trade P&L</div>
+          <div class="wallet-amount" id="wallet-trade">₱0.00</div>
+          <div class="wallet-chg gold" id="wallet-trade-chg">0 trades</div>
+        </div>
+      </div>
 
-      const { balance, interest_rate_per_second, open_trades } = res.data;
-      const rate = parseFloat(interest_rate_per_second) || 0.000035;
-      const bal = parseFloat(balance) || 0;
-
-      // Update topbar
-      document.getElementById('topbar-balance').textContent = formatPHP(bal);
-
-      // Update rate badge
-      document.getElementById('rate-display').textContent = (rate * 100).toFixed(4) + '%';
-      const dailyEarning = bal * rate * 86400;
-      document.getElementById('daily-rate').textContent = formatPHP(dailyEarning);
-
-      // Start interest ticker
-      if (ticker) ticker.stop();
-      ticker = startInterestTicker(bal, rate, 'balance-display');
-
-      // Sync topbar every 5s
-      setInterval(() => {
-        const rawBal = document.getElementById('balance-display').textContent.replace(/[₱,]/g,'');
-        document.getElementById('topbar-balance').textContent = '₱' + parseFloat(rawBal).toLocaleString('en-PH', {minimumFractionDigits:2,maximumFractionDigits:2});
-      }, 5000);
-
-      // Render open trades
-      openTradesData = open_trades || [];
-      renderOpenTrades();
-    }
-
-    // Load chart for current provider
-    async function loadChart(slug) {
-      const res = await apiFetch(`/api/chart/${slug}/candles`);
-      const candles = res?.data?.candles || [];
-      initChart('chart-container', slug, candles);
-    }
-
-    // Provider tabs
-    document.querySelectorAll('.provider-tab').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.provider-tab').forEach(t => t.classList.remove('active'));
-        btn.classList.add('active');
-        currentProvider = btn.dataset.slug;
-        loadChart(currentProvider);
-      });
-    });
-
-    // Duration buttons
-    document.querySelectorAll('.duration-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        document.querySelectorAll('.duration-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        selectedDuration = parseInt(btn.dataset.sec);
-      });
-    });
-
-    // Trade buttons
-    async function placeTrade(direction) {
-      const stake = parseFloat(document.getElementById('stake-input').value);
-      if (!stake || stake < 10) {
-        showToast('Invalid Stake', 'Minimum stake is ₱10', 'error');
-        return;
-      }
-
-      // Get provider ID
-      const provRes = await apiFetch('/api/providers');
-      const providers = provRes?.data?.providers || [];
-      const provider = providers.find(p => p.slug === currentProvider);
-      if (!provider) { showToast('Error', 'Provider not found', 'error'); return; }
-
-      const btn = direction === 'up' ? document.getElementById('btn-up') : document.getElementById('btn-down');
-      const origText = btn.textContent;
-      btn.disabled = true;
-      btn.textContent = 'Placing...';
-
-      const res = await apiFetch('/api/member/trade', 'POST', {
-        provider_id: provider.id,
-        direction,
-        stake,
-        duration_seconds: selectedDuration
-      });
-
-      btn.disabled = false;
-      btn.textContent = origText;
-
-      if (res && res.ok) {
-        showToast(`Trade Placed! ${direction === 'up' ? '🟢' : '🔴'}`, `${direction.toUpperCase()} ₱${stake} for ${selectedDuration}s`, 'success');
-        openTradesData.push(res.data.trade);
-        renderOpenTrades();
-        loadDashboard();
-      } else {
-        showToast('Trade Failed', res?.data?.error || 'Could not place trade', 'error');
-      }
-    }
-
-    document.getElementById('btn-up').addEventListener('click', () => placeTrade('up'));
-    document.getElementById('btn-down').addEventListener('click', () => placeTrade('down'));
-
-    // Render open trades with countdown
-    function renderOpenTrades() {
-      const container = document.getElementById('open-trades-list');
-      Object.values(countdownIntervals).forEach(clearInterval);
-      countdownIntervals = {};
-
-      const pending = openTradesData.filter(t => t.result === 'pending');
-      if (!pending.length) {
-        container.innerHTML = '<div class="no-trades">No open trades. Place your first trade above!</div>';
-        return;
-      }
-
-      container.innerHTML = pending.map(trade => `
-        <div class="trade-item" id="trade-${trade.id}">
-          <div class="trade-info">
-            <div style="font-weight:600; font-size:14px;">${(trade.game_providers?.name || currentProvider).toUpperCase()}</div>
-            <div style="font-size:13px; color:var(--text-muted); margin-top:2px;">
-              Stake: <strong style="color:var(--text-primary);">${formatPHP(trade.stake)}</strong>
-              &nbsp;·&nbsp; Payout: <strong style="color:var(--accent-green);">${formatPHP(parseFloat(trade.stake)*1.8)}</strong>
-            </div>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span class="badge badge-${trade.direction}">${trade.direction.toUpperCase()}</span>
-            <span class="trade-countdown" id="countdown-${trade.id}">—</span>
+      <!-- REVENUE / CHART -->
+      <div class="card" id="chart-section">
+        <div class="section-hdr">
+          <span class="section-title">Revenue Overview</span>
+          <div class="period-tabs">
+            <span class="period-tab active" data-p="1D">1D</span>
+            <span class="period-tab" data-p="1W">1W</span>
+            <span class="period-tab" data-p="1M">1M</span>
+            <span class="period-tab" data-p="3M">3M</span>
           </div>
         </div>
-      `).join('');
+        <div class="chart-tabs" id="provider-tabs">
+          <span class="chart-tab active" data-idx="0">Loading…</span>
+        </div>
+        <div class="chart-wrap">
+          <canvas id="revenue-chart"></canvas>
+        </div>
+      </div>
 
-      pending.forEach(trade => {
-        const closeAt = new Date(trade.trade_close_at).getTime();
-        const el = document.getElementById(`countdown-${trade.id}`);
-        if (!el) return;
+    </div>
 
-        const tick = () => {
-          const remaining = Math.max(0, Math.ceil((closeAt - Date.now()) / 1000));
-          el.textContent = formatCountdown(remaining);
-          if (remaining <= 0) {
-            clearInterval(countdownIntervals[trade.id]);
-            el.textContent = 'Settling...';
-            setTimeout(() => loadDashboard(), 2000);
-          }
-        };
-        tick();
-        countdownIntervals[trade.id] = setInterval(tick, 1000);
-      });
-    }
+    <!-- RIGHT SIDEBAR -->
+    <div id="right-sidebar">
 
-    // Poll for settled trades every 5s
-    let lastSettled = [];
-    async function pollSettlements() {
-      const res = await apiFetch('/api/member/dashboard');
-      if (!res || !res.ok) return;
+      <!-- Provider News -->
+      <div class="card card-sm">
+        <div class="section-hdr">
+          <span class="section-title">Provider News</span>
+          <span class="view-all">View All</span>
+        </div>
+        <div id="news-list">
+          <div class="news-item">
+            <div class="news-logo c-jili">JILI</div>
+            <div class="news-body">
+              <div class="news-title">JILI Launches 5 New Slot Titles</div>
+              <div class="news-sub">New games include Super Ace 2 and Golden Empire Deluxe.</div>
+              <div class="news-time">5 min ago</div>
+            </div>
+          </div>
+          <div class="news-item">
+            <div class="news-logo c-pragmatic">PP</div>
+            <div class="news-body">
+              <div class="news-title">Pragmatic Play Hits Record GGR</div>
+              <div class="news-sub">Sweet Bonanza series drives 32% revenue increase this quarter.</div>
+              <div class="news-time">22 min ago</div>
+            </div>
+          </div>
+          <div class="news-item">
+            <div class="news-logo c-evolution">FC</div>
+            <div class="news-body">
+              <div class="news-title">Evolution Expands to New Markets</div>
+              <div class="news-sub">Provider secures licensing for 3 additional Asian territories.</div>
+              <div class="news-time">1 hr ago</div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      const { open_trades } = res.data;
-      const newPending = (open_trades || []).map(t => t.id);
-      const wasOpen = openTradesData.filter(t => t.result === 'pending').map(t => t.id);
+      <!-- Top Providers -->
+      <div class="card card-sm">
+        <div class="section-hdr">
+          <span class="section-title">Top Providers</span>
+          <span class="view-all">View All</span>
+        </div>
+        <div id="top-providers">
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Loading…</div>
+        </div>
+      </div>
 
-      wasOpen.forEach(id => {
-        if (!newPending.includes(id)) {
-          // Trade settled — check result
-          apiFetch('/api/member/trades?limit=5').then(r => {
-            const settled = (r?.data?.trades || []).find(t => t.id === id);
-            if (settled) {
-              if (settled.result === 'win') {
-                showToast('🏆 Trade Won!', `+${formatPHP(settled.payout_amount)} credited`, 'success', 5000);
-              } else if (settled.result === 'loss') {
-                showToast('❌ Trade Lost', `Better luck next time!`, 'error', 4000);
-              }
-            }
-          });
+      <!-- Recent Transactions -->
+      <div class="card card-sm">
+        <div class="section-hdr">
+          <span class="section-title">Recent Transactions</span>
+          <span class="view-all">View All</span>
+        </div>
+        <div id="recent-tx">
+          <div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">Loading…</div>
+        </div>
+      </div>
+
+      <!-- Live Traders -->
+      <div class="card card-sm">
+        <div class="section-hdr">
+          <span class="section-title">Live Traders</span>
+          <span class="view-all">View All</span>
+        </div>
+        <div class="traders-grid" id="live-traders">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <!-- Investment Performance -->
+      <div class="card card-sm" id="perf-card">
+        <div class="section-hdr" style="margin-bottom:6px;">
+          <span class="section-title" style="color:var(--muted2);">Your Investment Performance</span>
+          <span style="font-size:10px;color:var(--muted);">This Month</span>
+        </div>
+        <div class="perf-amount" id="perf-amount">+₱0.00</div>
+        <div class="perf-pct" id="perf-pct">+0.00%</div>
+        <div class="perf-sub" id="perf-sub">Loading performance data…</div>
+        <div class="perf-mini-chart">
+          <canvas id="perf-chart"></canvas>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script src="/assets/js/api.js"></script>
+<script>
+// ── AUTH GUARD ────────────────────────────────────────────
+if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
+
+// ── STATE ─────────────────────────────────────────────────
+let providers = [];
+let activeProviderIdx = 0;
+let chartInstance = null;
+let perfChartInstance = null;
+let memberData = null;
+let balanceBase = 0;      // balance at login
+let tickerPrices = {};    // { slug: { price, change } }
+let interestTimer = null;
+
+const LIVE_TRADERS = [
+  { name: 'Marco Reyes', gain: '+18.45%', viewers: '8.2k', initials: 'MR', color: '#3b82f6' },
+  { name: 'Jia Lin Chen', gain: '+22.73%', viewers: '8.02', initials: 'JC', color: '#8b5cf6' },
+  { name: 'Rafael Santos', gain: '+15.32%', viewers: '5.4k', initials: 'RS', color: '#10b981' },
+  { name: 'Anika Patel', gain: '+17.89%', viewers: '3.1k', initials: 'AP', color: '#f59e0b' },
+];
+
+// Provider color classes
+const PROVIDER_COLORS = { jili: 'c-jili', evolution: 'c-evolution', pragmatic: 'c-pragmatic', sagaming: 'c-sagaming' };
+const PROVIDER_INITIALS = { jili: 'JILI', evolution: 'EVO', pragmatic: 'PP', sagaming: 'SAG' };
+
+// ── INIT ──────────────────────────────────────────────────
+async function init() {
+  const user = getUser();
+  if (user) {
+    const initial = user.username?.charAt(0).toUpperCase() || '?';
+    document.getElementById('ticker-username').textContent = user.username;
+    document.getElementById('ticker-avatar').textContent = initial;
+    document.getElementById('sidebar-avatar').textContent = initial;
+    document.getElementById('sidebar-username').textContent = user.username;
+  }
+
+  renderLiveTraders();
+  await Promise.all([loadDashboard(), loadProviders()]);
+}
+
+// ── DASHBOARD DATA ────────────────────────────────────────
+async function loadDashboard() {
+  const res = await apiFetch('/api/member/dashboard');
+  if (!res || !res.ok) return;
+  const d = res.data.data;
+  memberData = d;
+
+  const member = d.member;
+  const txs = d.recentTransactions || [];
+  const trades = d.activeTrades || [];
+  const balance = parseFloat(member.balance) || 0;
+  balanceBase = balance;
+
+  // Sidebar balance
+  document.getElementById('sidebar-balance').textContent = formatPHP(balance);
+
+  // Main balance card
+  document.getElementById('bal-amount').textContent = formatPHP(balance);
+
+  // Calculate interest earned (sum of interest type transactions)
+  const interestEarned = txs
+    .filter(t => t.type === 'interest' && t.status === 'approved')
+    .reduce((s, t) => s + parseFloat(t.amount || 0), 0);
+
+  // Trade P&L
+  const tradeWins  = txs.filter(t => t.type === 'trade_win').reduce((s,t) => s + parseFloat(t.amount||0), 0);
+  const tradeLoss  = txs.filter(t => t.type === 'trade_loss').reduce((s,t) => s + parseFloat(t.amount||0), 0);
+  const tradePnl   = tradeWins - tradeLoss;
+  const totalTrades= txs.filter(t => t.type === 'trade_win' || t.type === 'trade_loss').length;
+
+  // Daily rate
+  const ratePerSec = parseFloat(member.interest_rate_per_second) || 0.000035;
+  const dailyPct   = (ratePerSec * 86400 * 100).toFixed(4);
+  const monthlyPct = (ratePerSec * 86400 * 30 * 100).toFixed(2);
+
+  // Balance change (use interest earned as the "gain today")
+  const changeAmt = interestEarned || (balance * ratePerSec * 86400 * 30);
+  const changePct = balance > 0 ? ((changeAmt / (balance - changeAmt)) * 100).toFixed(2) : '0.00';
+  const balChangeEl = document.getElementById('bal-change');
+  balChangeEl.textContent = `+ ${formatPHP(changeAmt)} (${changePct}%)`;
+  balChangeEl.className = 'bal-change ' + (changeAmt >= 0 ? '' : 'neg');
+
+  // Wallets
+  document.getElementById('wallet-main').textContent = formatPHP(balance);
+  document.getElementById('wallet-main-rate').textContent = `${(ratePerSec * 100).toFixed(6)}%/sec`;
+  document.getElementById('wallet-interest').textContent = formatPHP(Math.max(interestEarned, 0));
+  document.getElementById('wallet-interest-chg').textContent = `+${formatPHP(Math.max(interestEarned,0))} earned`;
+  document.getElementById('wallet-trade').textContent = (tradePnl >= 0 ? '+' : '') + formatPHP(tradePnl);
+  const tradePnlEl = document.getElementById('wallet-trade');
+  tradePnlEl.style.color = tradePnl >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('wallet-trade-chg').textContent = `${totalTrades} trades completed`;
+
+  // Interest display
+  document.getElementById('interest-rate-display').textContent =
+    `${dailyPct}% per day · ${monthlyPct}% per month`;
+  document.getElementById('interest-live-display').textContent =
+    `+${formatPHP(ratePerSec * balance)} / sec`;
+
+  // Start live interest counter
+  startInterestTicker(balance, ratePerSec);
+
+  // Recent transactions
+  renderRecentTx(txs.slice(0, 5));
+
+  // Performance card
+  const perfMonthly = balance * ratePerSec * 86400 * 30;
+  document.getElementById('perf-amount').textContent = `+${formatPHP(perfMonthly)}`;
+  document.getElementById('perf-pct').textContent = `+${monthlyPct}%`;
+  document.getElementById('perf-sub').textContent = `That's ${(parseFloat(monthlyPct) / 3).toFixed(2)}% more than last month!`;
+  renderPerfChart(ratePerSec, balance);
+}
+
+// ── INTEREST LIVE TICKER ─────────────────────────────────
+function startInterestTicker(balance, ratePerSec) {
+  if (interestTimer) clearInterval(interestTimer);
+  let currentBalance = balance;
+  const el = document.getElementById('bal-amount');
+  const liveEl = document.getElementById('interest-live-display');
+  const sidebarEl = document.getElementById('sidebar-balance');
+
+  interestTimer = setInterval(() => {
+    currentBalance += ratePerSec * balance;
+    el.textContent = formatPHP(currentBalance);
+    sidebarEl.textContent = formatPHP(currentBalance);
+    liveEl.textContent = `+${formatPHP(ratePerSec * balance)} / sec`;
+  }, 1000);
+}
+
+// ── PROVIDERS + TICKER ────────────────────────────────────
+async function loadProviders() {
+  const res = await apiFetch('/api/chart/providers');
+  if (!res || !res.ok) return;
+  providers = res.data.data?.providers || [];
+
+  // Init ticker prices with small random changes
+  providers.forEach(p => {
+    const price = parseFloat(p.current_price) || 100;
+    const chgPct = (Math.random() * 4 - 1).toFixed(2);
+    tickerPrices[p.slug] = { price, chgPct: parseFloat(chgPct) };
+  });
+
+  renderTickerBar();
+  renderProviderTabs();
+  renderTopProviders();
+  if (providers.length > 0) loadChart(providers[0].id);
+
+  // Simulate live price ticks every 5s
+  setInterval(() => {
+    providers.forEach(p => {
+      const t = tickerPrices[p.slug];
+      if (!t) return;
+      const delta = (Math.random() - 0.47) * 0.8;
+      t.price = Math.max(0.01, t.price + delta);
+      t.chgPct = parseFloat((t.chgPct + (Math.random() - 0.48) * 0.1).toFixed(2));
+    });
+    renderTickerBar();
+    renderTopProviders();
+  }, 5000);
+}
+
+function renderTickerBar() {
+  const container = document.getElementById('ticker-items');
+  container.innerHTML = providers.map(p => {
+    const t = tickerPrices[p.slug] || { price: p.current_price, chgPct: 0 };
+    const up = t.chgPct >= 0;
+    return `<div class="ticker-item">
+      <span class="t-name">${p.name.split(' ')[0].toUpperCase()}</span>
+      <span class="t-price">₱${parseFloat(t.price).toLocaleString('en-PH', {minimumFractionDigits:2, maximumFractionDigits:2})}</span>
+      <span class="t-chg ${up?'up':'dn'}">${up?'+':''}${t.chgPct}%</span>
+    </div>`;
+  }).join('');
+}
+
+function renderProviderTabs() {
+  const tabs = document.getElementById('provider-tabs');
+  const names = { jili: 'Slots', evolution: 'Live Casino', pragmatic: 'Mini Games', sagaming: 'Fishing' };
+  tabs.innerHTML = providers.map((p, i) => {
+    const label = names[p.slug] || p.name;
+    return `<span class="chart-tab ${i===0?'active':''}" data-idx="${i}" onclick="switchProvider(${i})">${label}</span>`;
+  }).join('');
+}
+
+function renderTopProviders() {
+  const container = document.getElementById('top-providers');
+  if (!providers.length) { container.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">No providers</div>'; return; }
+  container.innerHTML = providers.map(p => {
+    const t = tickerPrices[p.slug] || { price: p.current_price, chgPct: 0 };
+    const up = t.chgPct >= 0;
+    const colorClass = PROVIDER_COLORS[p.slug] || 'c-default';
+    const initials = PROVIDER_INITIALS[p.slug] || p.name.substring(0,3).toUpperCase();
+    return `<div class="provider-row">
+      <div class="provider-icon ${colorClass}">${initials}</div>
+      <div class="provider-name">
+        <div class="p-title">${p.name}</div>
+        <div class="p-slug">${p.slug.toUpperCase()}</div>
+      </div>
+      <div class="provider-price">
+        <div class="p-val">₱${parseFloat(t.price).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2})}</div>
+        <div class="p-chg ${up?'up':'dn'}">${up?'+':''}${t.chgPct}%</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHART ────────────────────────────────────────────────
+async function switchProvider(idx) {
+  activeProviderIdx = idx;
+  document.querySelectorAll('.chart-tab').forEach((t, i) => t.classList.toggle('active', i === idx));
+  if (providers[idx]) loadChart(providers[idx].id);
+}
+
+async function loadChart(providerId) {
+  const res = await apiFetch(`/api/chart/candles/${providerId}`);
+  if (!res || !res.ok) return;
+  const candles = res.data.data?.candles || [];
+  renderChart(candles);
+}
+
+function renderChart(candles) {
+  const ctx = document.getElementById('revenue-chart').getContext('2d');
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
+  if (!candles.length) {
+    // Generate synthetic candles for demo
+    candles = generateSyntheticCandles(60, 100);
+  }
+
+  const labels = candles.map((_, i) => i);
+  const prices = candles.map(c => parseFloat(c.close || c.open || 100));
+  const lastPrice = prices[prices.length - 1] || 100;
+
+  // Build gradient
+  const grad = ctx.createLinearGradient(0, 0, 0, 220);
+  grad.addColorStop(0, 'rgba(16,185,129,0.25)');
+  grad.addColorStop(1, 'rgba(16,185,129,0.01)');
+
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        data: prices,
+        borderColor: '#10b981',
+        borderWidth: 2,
+        backgroundColor: grad,
+        fill: true,
+        tension: 0.3,
+        pointRadius: 0,
+        pointHoverRadius: 4,
+        pointHoverBackgroundColor: '#10b981',
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: {
+        mode: 'index', intersect: false,
+        backgroundColor: '#1f2937', titleColor: '#9ca3af', bodyColor: '#f9fafb',
+        borderColor: '#374151', borderWidth: 1,
+        callbacks: { label: ctx => `₱${ctx.raw.toLocaleString('en-PH',{minimumFractionDigits:2})}` }
+      }},
+      scales: {
+        x: { display: false },
+        y: {
+          display: true,
+          position: 'right',
+          grid: { color: 'rgba(255,255,255,0.04)' },
+          border: { display: false },
+          ticks: { color: '#4b5563', font: { size: 10 }, callback: v => `₱${v.toLocaleString('en-PH',{minimumFractionDigits:0})}` }
         }
-      });
-
-      openTradesData = open_trades || [];
-      renderOpenTrades();
+      },
+      interaction: { mode: 'index', intersect: false },
+      animation: { duration: 400 }
     }
+  });
 
-    // Init
-    loadDashboard().then(() => loadChart(currentProvider));
-    setInterval(pollSettlements, 5000);
-  </script>
+  // Show last price label
+  const wrap = document.querySelector('.chart-wrap');
+  let existingLabel = wrap.querySelector('.chart-price-label');
+  if (!existingLabel) {
+    existingLabel = document.createElement('div');
+    existingLabel.className = 'chart-price-label';
+    wrap.appendChild(existingLabel);
+  }
+  existingLabel.textContent = `₱${lastPrice.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+}
+
+function generateSyntheticCandles(count, startPrice) {
+  const candles = [];
+  let price = startPrice;
+  for (let i = 0; i < count; i++) {
+    const change = (Math.random() - 0.47) * 3;
+    price = Math.max(1, price + change);
+    candles.push({ open: price - change, close: price, high: price + Math.random(), low: price - Math.random() });
+  }
+  return candles;
+}
+
+// ── RECENT TRANSACTIONS ───────────────────────────────────
+function renderRecentTx(txs) {
+  const container = document.getElementById('recent-tx');
+  const TX_ICONS = { deposit: '⬇️', withdrawal: '⬆️', interest: '💹', trade_win: '🏆', trade_loss: '📉' };
+  const isUp = t => ['deposit', 'interest', 'trade_win'].includes(t.type);
+
+  if (!txs || !txs.length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:12px;">No transactions yet</div>';
+    return;
+  }
+
+  container.innerHTML = txs.map(t => {
+    const up = isUp(t);
+    const typeLabel = t.type?.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase()) || '—';
+    const subLabel = t.notes || (t.payment_method ? t.payment_method : t.reference_number ? `Ref: ${t.reference_number}` : '');
+    return `<div class="tx-row">
+      <div class="tx-icon ${t.type}">${TX_ICONS[t.type] || '💱'}</div>
+      <div class="tx-info">
+        <div class="tx-type">${typeLabel}</div>
+        <div class="tx-sub">${subLabel || formatDate(t.created_at)}</div>
+      </div>
+      <div class="tx-right">
+        <div class="tx-amount ${up?'up':'dn'}">${up?'+':'-'}${formatPHP(t.amount)}</div>
+        <div class="tx-status ${t.status}">${t.status}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── LIVE TRADERS ─────────────────────────────────────────
+function renderLiveTraders() {
+  const container = document.getElementById('live-traders');
+  container.innerHTML = LIVE_TRADERS.map(t => `
+    <div class="trader-card">
+      <div class="trader-thumb">
+        <div class="trader-bg" style="background:linear-gradient(135deg,${t.color}33,#0a0e1b);"></div>
+        <div class="live-badge">LIVE</div>
+        <div class="viewer-count">${t.viewers}</div>
+        <div class="trader-info">
+          <div class="trader-avatar" style="background:${t.color};">${t.initials}</div>
+          <span class="trader-name">${t.name.split(' ')[0]}</span>
+          <span class="trader-gain">${t.gain}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// ── PERFORMANCE MINI CHART ────────────────────────────────
+function renderPerfChart(ratePerSec, balance) {
+  const ctx = document.getElementById('perf-chart').getContext('2d');
+  if (perfChartInstance) { perfChartInstance.destroy(); perfChartInstance = null; }
+
+  // Simulate 30 days of balance growth
+  const data = [];
+  let b = balance * 0.85;
+  for (let i = 0; i < 30; i++) {
+    b += b * ratePerSec * 86400 + (Math.random() - 0.3) * (b * 0.01);
+    data.push(b);
+  }
+
+  const grad = ctx.createLinearGradient(0, 0, 0, 40);
+  grad.addColorStop(0, 'rgba(16,185,129,0.3)');
+  grad.addColorStop(1, 'rgba(16,185,129,0.0)');
+
+  perfChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map((_, i) => i),
+      datasets: [{ data, borderColor: '#10b981', borderWidth: 1.5, backgroundColor: grad, fill: true, tension: 0.4, pointRadius: 0 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { enabled: false } },
+      scales: { x: { display: false }, y: { display: false } },
+      animation: { duration: 600 }
+    }
+  });
+}
+
+// ── PERIOD TABS ───────────────────────────────────────────
+document.querySelectorAll('.period-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.period-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    if (providers[activeProviderIdx]) loadChart(providers[activeProviderIdx].id);
+  });
+});
+
+// ── START ─────────────────────────────────────────────────
+init();
+
+// Auto-refresh every 30s
+setInterval(async () => {
+  await loadDashboard();
+  renderTopProviders();
+}, 30000);
+</script>
 </body>
 </html>
