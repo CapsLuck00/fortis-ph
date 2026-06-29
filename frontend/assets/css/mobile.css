@@ -3,7 +3,8 @@
    1. Page-enter fade  (kills zoom-flash on navigation)
    2. Hamburger button
    3. Sidebar off-canvas drawer
-   4. Full responsive layout ≤ 768px
+   4. Full responsive layout ≤ 768px  (dashboard + landing)
+   5. Extra-small  ≤ 420px
    ═══════════════════════════════════════════════════════════════ */
 
 /* ── 1. PAGE ENTER — smooth fade, no zoom flash ──────────────── */
@@ -50,7 +51,7 @@ html { animation: _pageEnter 0.13s ease; }
    ═══════════════════════════════════════════════════════════════ */
 @media (max-width: 768px) {
 
-  /* Show hamburger */
+  /* ── HAMBURGER: show on mobile ── */
   .hamburger-btn { display: flex; }
 
   /* ── TICKER BAR ── */
@@ -81,31 +82,45 @@ html { animation: _pageEnter 0.13s ease; }
   }
   #sidebar.mob-open { left: 0 !important; }
 
-  /* ── APP LAYOUT ── */
-  html, body { overflow: auto !important; height: auto !important; }
+  /* ── ROOT: unlock scroll ──
+     KEY FIX: #app is position:fixed in every page's inline <style>.
+     Without overriding position, the entire app is viewport-locked
+     and nothing outside #content can ever scroll on mobile.        */
+  html, body {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 100% !important;
+  }
 
+  /* ── APP SHELL: unfix + re-stack ── */
   #app {
+    position: static !important;   /* un-fix from viewport — THE SCROLL FIX */
+    top: auto !important;
+    left: auto !important;
+    right: auto !important;
+    bottom: auto !important;
     flex-direction: column !important;
     overflow: visible !important;
     height: auto !important;
-    min-height: calc(100vh - var(--ticker-h)) !important;
+    min-height: 100vh !important;
+    padding-top: var(--ticker-h, 44px) !important; /* space for fixed ticker */
   }
 
+  /* ── MAIN AREA: natural height, page scrolls ── */
   #main {
     flex: 1 1 auto !important;
     width: 100% !important;
     max-width: 100% !important;
-    overflow: visible !important;
+    overflow-y: visible !important;  /* don't create inner scroll */
+    overflow-x: hidden !important;
+    height: auto !important;
+    min-height: 0 !important;
     padding: 12px !important;
     display: flex !important;
     flex-direction: column !important;
     gap: 12px !important;
   }
-
-  /* Hide right sidebar (news feed / provider panel) */
-  #right-sidebar,
-  [id="right-sidebar"],
-  .right-sidebar { display: none !important; }
 
   /* ── CONTENT AREA ── */
   #content {
@@ -114,70 +129,48 @@ html { animation: _pageEnter 0.13s ease; }
     overflow: visible !important;
     min-width: 0 !important;
     width: 100% !important;
+    height: auto !important;
+    flex: none !important;
   }
 
-  /* ── DASHBOARD INDEX: wallet row ── */
-  #wallets-row {
-    grid-template-columns: 1fr !important;
-  }
-  .traders-grid {
-    grid-template-columns: 1fr !important;
-  }
-  #interest-ticker {
-    flex-direction: column !important;
-    gap: 6px !important;
-    align-items: flex-start !important;
-  }
+  /* Hide right sidebar (news feed / provider panel) */
+  #right-sidebar,
+  [id="right-sidebar"],
+  .right-sidebar { display: none !important; }
+
+  /* ── DASHBOARD INDEX ── */
+  #wallets-row { grid-template-columns: 1fr !important; }
+  .traders-grid { grid-template-columns: 1fr !important; }
+  #interest-ticker { flex-direction: column !important; gap: 6px !important; align-items: flex-start !important; }
 
   /* ── WALLET PAGE ── */
-  .wallet-cards {
-    grid-template-columns: 1fr !important;
-  }
+  .wallet-cards { grid-template-columns: 1fr !important; }
 
   /* ── TRADE PAGE ── */
-  .trade-layout {
-    grid-template-columns: 1fr !important;
-  }
+  .trade-layout { grid-template-columns: 1fr !important; }
   #price-chart-wrap { height: 220px !important; }
   .chart-wrap { height: 220px !important; min-height: 180px !important; }
 
   /* ── MARKETS PAGE ── */
-  .markets-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .markets-grid { grid-template-columns: 1fr !important; }
+  #markets-grid { grid-template-columns: 1fr !important; }
 
   /* ── COPY TRADING ── */
-  .trader-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .trader-grid { grid-template-columns: 1fr !important; }
 
   /* ── ANALYTICS PAGE ── */
-  .kpi-row {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 10px !important;
-  }
-  .analytics-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .kpi-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .analytics-grid { grid-template-columns: 1fr !important; }
 
   /* ── DEPOSIT / WITHDRAW ── */
-  .two-col {
-    grid-template-columns: 1fr !important;
-    gap: 14px !important;
-  }
-  .method-grid {
-    grid-template-columns: repeat(2, 1fr) !important;
-  }
+  .two-col { grid-template-columns: 1fr !important; gap: 14px !important; }
+  .method-grid { grid-template-columns: repeat(2, 1fr) !important; }
 
   /* ── SETTINGS PAGE ── */
-  .settings-grid {
-    grid-template-columns: 1fr !important;
-  }
+  .settings-grid { grid-template-columns: 1fr !important; }
 
   /* ── EDUCATION PAGE ── */
-  .lesson-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
+  .lesson-grid { grid-template-columns: 1fr 1fr !important; }
 
   /* ── TABLES: horizontal scroll ── */
   .tbl-wrap {
@@ -186,27 +179,91 @@ html { animation: _pageEnter 0.13s ease; }
   }
   .tbl-wrap table { min-width: 520px; }
 
-  /* ── BALANCE NUMBERS ── */
-  .wallet-amount,
-  #w-main,
-  #balance-display { font-size: 26px !important; }
+  /* ── ADMIN: grids ── */
+  .stats-grid { grid-template-columns: 1fr 1fr !important; }
+  .providers-grid { grid-template-columns: 1fr !important; }
 
-  /* ── ADMIN: stats grid ── */
-  .stats-grid {
-    grid-template-columns: 1fr 1fr !important;
-  }
-  .providers-grid {
-    grid-template-columns: 1fr !important;
-  }
+  /* ── BALANCE NUMBERS ── */
+  .wallet-amount, #w-main, #balance-display { font-size: 26px !important; }
 
   /* ── MISC ── */
   .card { border-radius: 8px !important; }
   .page-title { font-size: 18px !important; }
+
+  /* ════════════════════════════════════════════════════════════
+     LANDING PAGE  (fortis-ph.vercel.app/)
+     ════════════════════════════════════════════════════════════ */
+
+  /* Nav */
+  .landing-nav {
+    padding: 14px 16px !important;
+  }
+  .landing-nav .logo { font-size: 16px !important; }
+
+  /* Stats bar */
+  .stats-bar {
+    padding: 12px 16px !important;
+    font-size: 13px !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    text-align: center !important;
+    justify-content: center !important;
+  }
+  .stats-bar .value { font-size: 15px !important; }
+
+  /* Hero */
+  .hero {
+    padding: 48px 20px 40px !important;
+  }
+  .hero h1 { font-size: clamp(28px, 8vw, 40px) !important; }
+  .hero p { font-size: 15px !important; }
+  .hero-btns {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+  .hero-btns .btn { width: 100% !important; max-width: 300px !important; text-align: center !important; }
+
+  /* How it works */
+  .how-it-works {
+    padding: 48px 20px !important;
+  }
+  .how-it-works h2 { font-size: 24px !important; margin-bottom: 32px !important; }
+  .steps {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  .step { padding: 24px 20px !important; }
+
+  /* Providers section */
+  .providers-section {
+    padding: 48px 20px !important;
+  }
+  .providers-section h2 { font-size: 24px !important; }
+  .providers-section p { font-size: 14px !important; margin-bottom: 24px !important; }
+  .providers-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 12px !important;
+  }
+  .provider-card { padding: 24px 16px !important; }
+  .provider-icon { font-size: 32px !important; }
+
+  /* Footer */
+  .footer {
+    padding: 20px 16px !important;
+    font-size: 12px !important;
+  }
+
+  /* Auth pages */
+  .auth-card { padding: 28px 20px !important; }
 }
 
-/* ── EXTRA SMALL: phones < 420px ── */
+/* ── EXTRA SMALL: phones ≤ 420px ── */
 @media (max-width: 420px) {
   .kpi-row { grid-template-columns: 1fr !important; }
   .lesson-grid { grid-template-columns: 1fr !important; }
   .stats-grid { grid-template-columns: 1fr !important; }
+  .providers-grid { grid-template-columns: 1fr !important; }
+  .method-grid { grid-template-columns: 1fr !important; }
+  .hero-btns .btn { max-width: 100% !important; }
 }
