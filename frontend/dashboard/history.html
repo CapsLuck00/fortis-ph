@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>History — FortisPH</title>
+  <link rel="stylesheet" href="/assets/css/main.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="sidebar-logo">
+        <div class="logo-text">⚡ FortisPH</div>
+        <div class="logo-sub">Member Portal</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="/dashboard/index.html"><span class="nav-icon">📊</span> Dashboard</a>
+        <a href="/dashboard/deposit.html"><span class="nav-icon">💰</span> Deposit</a>
+        <a href="/dashboard/withdraw.html"><span class="nav-icon">💸</span> Withdraw</a>
+        <a href="/dashboard/history.html" class="active"><span class="nav-icon">📜</span> History</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="sidebar-user"><strong id="sidebar-username">Loading...</strong>Member</div>
+        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div class="topbar-title">Transaction History</div>
+      </header>
+
+      <div class="page-body">
+        <div class="tabs">
+          <button class="tab-btn active" data-tab="transactions">Transactions</button>
+          <button class="tab-btn" data-tab="trades">Trades</button>
+        </div>
+
+        <!-- Transactions Tab -->
+        <div class="tab-panel active" id="tab-transactions">
+          <div class="card">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Type</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                    <th>Reference</th>
+                  </tr>
+                </thead>
+                <tbody id="tx-tbody">
+                  <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination" id="tx-pagination"></div>
+          </div>
+        </div>
+
+        <!-- Trades Tab -->
+        <div class="tab-panel" id="tab-trades">
+          <div class="card">
+            <div class="table-wrap">
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Provider</th>
+                    <th>Direction</th>
+                    <th>Stake</th>
+                    <th>Result</th>
+                    <th>Payout</th>
+                  </tr>
+                </thead>
+                <tbody id="trades-tbody">
+                  <tr><td colspan="6" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="pagination" id="trades-pagination"></div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast-container"></div>
+  <script src="/assets/js/api.js"></script>
+  <script>
+    if (!redirectIfNotLoggedIn()) throw new Error('Not logged in');
+    const user = getUser();
+    if (user) document.getElementById('sidebar-username').textContent = user.username;
+
+    let txPage = 1, tradesPage = 1;
+
+    // Tabs
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    async function loadTransactions(page = 1) {
+      const res = await apiFetch(`/api/member/transactions?page=${page}&limit=15`);
+      const tbody = document.getElementById('tx-tbody');
+      if (!res || !res.ok) { tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;">Failed to load</td></tr>'; return; }
+
+      const { transactions, pagination } = res.data;
+      if (!transactions.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:32px;">No transactions yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = transactions.map(t => `
+        <tr>
+          <td>${formatDate(t.created_at)}</td>
+          <td><span class="badge badge-${t.type}">${t.type.replace('_',' ').toUpperCase()}</span></td>
+          <td class="primary">${formatPHP(t.amount)}</td>
+          <td><span class="badge badge-${t.status}">${t.status.toUpperCase()}</span></td>
+          <td style="font-size:12px; color:var(--text-muted);">${t.reference_code || '—'}</td>
+        </tr>
+      `).join('');
+
+      renderPagination('tx-pagination', pagination, (p) => { txPage = p; loadTransactions(p); });
+    }
+
+    async function loadTrades(page = 1) {
+      const res = await apiFetch(`/api/member/trades?page=${page}&limit=15`);
+      const tbody = document.getElementById('trades-tbody');
+      if (!res || !res.ok) { tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;">Failed to load</td></tr>'; return; }
+
+      const { trades, pagination } = res.data;
+      if (!trades.length) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--text-muted); padding:32px;">No trades yet</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = trades.map(t => `
+        <tr>
+          <td>${formatDate(t.trade_open_at)}</td>
+          <td class="primary">${t.game_providers?.name || '—'}</td>
+          <td><span class="badge badge-${t.direction}">${t.direction.toUpperCase()}</span></td>
+          <td class="primary">${formatPHP(t.stake)}</td>
+          <td><span class="badge badge-${t.result}">${t.result.toUpperCase()}</span></td>
+          <td style="color: ${t.result === 'win' ? 'var(--accent-green)' : t.result === 'loss' ? 'var(--accent-red)' : 'var(--text-muted)'}; font-weight:600;">
+            ${t.result === 'win' ? '+' + formatPHP(t.payout_amount) : t.result === 'pending' ? '—' : formatPHP(0)}
+          </td>
+        </tr>
+      `).join('');
+
+      renderPagination('trades-pagination', pagination, (p) => { tradesPage = p; loadTrades(p); });
+    }
+
+    function renderPagination(containerId, pagination, onPageChange) {
+      const container = document.getElementById(containerId);
+      if (!pagination || pagination.pages <= 1) { container.innerHTML = ''; return; }
+
+      const { page, pages } = pagination;
+      let html = '';
+      if (page > 1) html += `<button class="page-btn" onclick="(${onPageChange.toString()})(${page-1})">← Prev</button>`;
+      for (let i = 1; i <= pages; i++) {
+        if (i === page) html += `<button class="page-btn active">${i}</button>`;
+        else html += `<button class="page-btn" onclick="(${onPageChange.toString()})(${i})">${i}</button>`;
+      }
+      if (page < pages) html += `<button class="page-btn" onclick="(${onPageChange.toString()})(${page+1})">Next →</button>`;
+      container.innerHTML = html;
+    }
+
+    loadTransactions();
+    loadTrades();
+  </script>
+</body>
+</html>
