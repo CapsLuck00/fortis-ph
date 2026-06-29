@@ -483,15 +483,21 @@ async function init() {
 
 // ── DASHBOARD DATA ────────────────────────────────────────
 async function loadDashboard() {
-  const res = await apiFetch('/api/member/dashboard');
+  const [res, txRes, tradeRes] = await Promise.all([
+    apiFetch('/api/member/dashboard'),
+    apiFetch('/api/member/transactions'),
+    apiFetch('/api/member/trades')
+  ]);
   if (!res || !res.ok) return;
   const d = res.data.data;
   memberData = d;
 
-  const member = d.member;
-  const txs = d.recentTransactions || [];
-  const trades = d.activeTrades || [];
-  const balance = parseFloat(member.balance) || 0;
+  // API returns flat: { balance, interest_rate_per_second, open_trades }
+  const member = d; // no .member wrapper
+  const txs = txRes?.data?.data?.transactions || [];
+  const allTrades = tradeRes?.data?.data?.trades || [];
+  const trades = d.open_trades || [];
+  const balance = parseFloat(d.balance) || 0;
   balanceBase = balance;
 
   // Sidebar balance
@@ -505,19 +511,19 @@ async function loadDashboard() {
     .filter(t => t.type === 'interest' && t.status === 'approved')
     .reduce((s, t) => s + parseFloat(t.amount || 0), 0);
 
-  // Trade P&L
-  const tradeWins  = txs.filter(t => t.type === 'trade_win').reduce((s,t) => s + parseFloat(t.amount||0), 0);
-  const tradeLoss  = txs.filter(t => t.type === 'trade_loss').reduce((s,t) => s + parseFloat(t.amount||0), 0);
+  // Trade P&L from trades endpoint
+  const tradeWins  = allTrades.filter(t => t.result === 'win').reduce((s,t) => s + (parseFloat(t.payout_amount||0) - parseFloat(t.stake||0)), 0);
+  const tradeLoss  = allTrades.filter(t => t.result === 'loss').reduce((s,t) => s + parseFloat(t.stake||0), 0);
   const tradePnl   = tradeWins - tradeLoss;
-  const totalTrades= txs.filter(t => t.type === 'trade_win' || t.type === 'trade_loss').length;
+  const totalTrades= allTrades.filter(t => t.result && t.result !== 'pending').length;
 
   // Daily rate
-  const ratePerSec = parseFloat(member.interest_rate_per_second) || 0.000035;
+  const ratePerSec = parseFloat(d.interest_rate_per_second) || 0.000035;
   const dailyPct   = (ratePerSec * 86400 * 100).toFixed(4);
   const monthlyPct = (ratePerSec * 86400 * 30 * 100).toFixed(2);
 
   // Balance change (use interest earned as the "gain today")
-  const changeAmt = interestEarned || (balance * ratePerSec * 86400 * 30);
+  const changeAmt = balance > 0 ? (balance * ratePerSec * 86400) : 0;
   const changePct = balance > 0 ? ((changeAmt / (balance - changeAmt)) * 100).toFixed(2) : '0.00';
   const balChangeEl = document.getElementById('bal-change');
   balChangeEl.textContent = `+ ${formatPHP(changeAmt)} (${changePct}%)`;
@@ -525,7 +531,7 @@ async function loadDashboard() {
 
   // Wallets
   document.getElementById('wallet-main').textContent = formatPHP(balance);
-  document.getElementById('wallet-main-rate').textContent = `${(ratePerSec * 100).toFixed(6)}%/sec`;
+  document.getElementById('wallet-main-rate').textContent = `${(ratePerSec * 100).toFixed(6)}%/sec · ₱${(ratePerSec*balance).toFixed(4)}/sec`;
   document.getElementById('wallet-interest').textContent = formatPHP(Math.max(interestEarned, 0));
   document.getElementById('wallet-interest-chg').textContent = `+${formatPHP(Math.max(interestEarned,0))} earned`;
   document.getElementById('wallet-trade').textContent = (tradePnl >= 0 ? '+' : '') + formatPHP(tradePnl);
@@ -544,7 +550,7 @@ async function loadDashboard() {
   renderRecentTx(txs.slice(0, 5));
 
   // Performance card
-  const perfMonthly = balance * ratePerSec * 86400 * 30;
+  const perfMonthly = balance > 0 ? balance * ratePerSec * 86400 * 30 : 0;
   document.getElementById('perf-amount').textContent = `+${formatPHP(perfMonthly)}`;
   document.getElementById('perf-pct').textContent = `+${monthlyPct}%`;
   document.getElementById('perf-sub').textContent = `That's ${(parseFloat(monthlyPct) / 3).toFixed(2)}% more than last month!`;

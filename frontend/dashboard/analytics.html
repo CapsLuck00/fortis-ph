@@ -100,12 +100,12 @@ redirectIfNotLoggedIn();
 const _u=getUser();
 if(_u){const i=_u.username?.charAt(0).toUpperCase()||'U';document.getElementById('tk-name').textContent=_u.username;document.getElementById('tk-avatar').textContent=i;const sa=document.getElementById('sb-avatar');if(sa)sa.textContent=i;const sn=document.getElementById('sb-name');if(sn)sn.textContent=_u.username;}
 async function loadTicker(){const r=await apiFetch('/api/chart/');if(!r||!r.ok)return;const ps=r.data.data?.providers||[];const el=document.getElementById('ticker-items');el.innerHTML=ps.map(p=>{const ch=(Math.random()-.5)*2;const chStr=(ch>=0?'+':'')+ch.toFixed(2)+'%';return '<div class="ticker-item"><span class="t-name">'+p.name+'</span><span class="t-val">₱'+parseFloat(p.current_price||100).toLocaleString('en-PH',{minimumFractionDigits:2})+'</span><span class="t-chg '+(ch>=0?'up':'dn')+'">'+ chStr +'</span></div>';}).join('');}
-async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.member?.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
+async function loadDashMini(){const r=await apiFetch('/api/member/dashboard');if(!r||!r.ok)return;const d=r.data.data;if(!d)return;const b=parseFloat(d.balance||0);const sb=document.getElementById('sb-bal');if(sb)sb.textContent='₱'+b.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});}
 function showToast(msg,isErr){const t=document.createElement('div');t.className='toast'+(isErr?' err':'');t.textContent=msg;document.body.appendChild(t);setTimeout(()=>t.remove(),3500);}
 loadTicker();loadDashMini();setInterval(loadTicker,8000);
 async function loadAnalytics(){
   const [dashR,tradesR,txnsR]=await Promise.all([apiFetch('/api/member/dashboard'),apiFetch('/api/member/trades'),apiFetch('/api/member/transactions')]);
-  const member=dashR?.data?.data?.member||{};
+  const d=dashR?.data?.data||{};
   const trades=tradesR?.data?.data?.trades||[];
   const txns=txnsR?.data?.data?.transactions||[];
   const fmt=v=>'₱'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2});
@@ -113,18 +113,19 @@ async function loadAnalytics(){
   const losses=trades.filter(t=>t.result==='loss').length;
   const total=wins+losses;
   const wr=total?((wins/total)*100).toFixed(1):0;
-  const pnl=trades.reduce((s,t)=>s+(t.result==='win'?parseFloat(t.profit||0):-parseFloat(t.stake||0)),0);
+  const pnl=trades.reduce((s,t)=>s+(t.result==='win'?parseFloat(t.payout_amount||0)-parseFloat(t.stake||0):(t.result==='loss'?-parseFloat(t.stake||0):0)),0);
+  const interestEarned=txns.filter(t=>t.type==='interest'&&t.status==='approved').reduce((s,t)=>s+parseFloat(t.amount||0),0);
   document.getElementById('an-trades').textContent=total;
   document.getElementById('an-winrate').textContent=wr+'%';
   const pnlEl=document.getElementById('an-pnl');
   pnlEl.textContent=(pnl>=0?'+':'-')+fmt(Math.abs(pnl));
   pnlEl.style.color=pnl>=0?'var(--green)':'var(--red)';
-  document.getElementById('an-interest').textContent=fmt(member.interest_earned);
+  document.getElementById('an-interest').textContent=fmt(interestEarned);
   // Pie chart
   new Chart(document.getElementById('pie-chart').getContext('2d'),{type:'doughnut',data:{labels:['Wins','Losses'],datasets:[{data:[wins||1,losses||1],backgroundColor:['rgba(16,185,129,0.8)','rgba(239,68,68,0.8)'],borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{labels:{color:'#9ca3af',font:{size:11}}}}}});
   // Income bar
-  const depTotal=txns.filter(t=>t.type==='deposit').reduce((s,t)=>s+parseFloat(t.amount||0),0);
-  const intTotal=parseFloat(member.interest_earned||0);
+  const depTotal=txns.filter(t=>t.type==='deposit'&&t.status==='approved').reduce((s,t)=>s+parseFloat(t.amount||0),0);
+  const intTotal=interestEarned;
   const tradeWin=trades.filter(t=>t.result==='win').reduce((s,t)=>s+parseFloat(t.profit||0),0);
   new Chart(document.getElementById('income-chart').getContext('2d'),{type:'bar',data:{labels:['Deposits','Interest','Trade Wins'],datasets:[{data:[depTotal,intTotal,tradeWin],backgroundColor:['rgba(59,130,246,.7)','rgba(245,158,11,.7)','rgba(16,185,129,.7)'],borderRadius:5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#6b7280',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}},y:{ticks:{color:'#6b7280',font:{size:10}},grid:{color:'rgba(255,255,255,0.04)'}}}}});
   // Provider bar
