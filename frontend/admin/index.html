@@ -7,270 +7,223 @@
   <link rel="stylesheet" href="/assets/css/main.css" />
 </head>
 <body>
-  <div class="app-shell">
-    <aside class="sidebar">
-      <div class="sidebar-logo">
-        <div class="logo-text">⚡ FortisPH</div>
-        <div class="logo-sub">Admin Panel</div>
+<div class="app-shell">
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-text">⚡ FortisPH</div>
+      <div class="logo-sub">Admin Panel</div>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin/index.html" class="active"><span class="nav-icon">📊</span> Dashboard</a>
+      <a href="/admin/chart.html"><span class="nav-icon">📈</span> Chart Control</a>
+      <a href="/admin/users.html"><span class="nav-icon">👥</span> Users</a>
+      <a href="/admin/transactions.html"><span class="nav-icon">💳</span> Transactions</a>
+    </nav>
+    <div class="sidebar-footer">
+      <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
+      <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <header class="topbar">
+      <div class="topbar-title">Admin Dashboard</div>
+      <div class="topbar-right">
+        <span id="last-updated" style="font-size:12px; color:var(--text-muted);"></span>
+        <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 Refresh</button>
       </div>
-      <nav class="sidebar-nav">
-        <a href="/admin/index.html" class="active"><span class="nav-icon">📊</span> Dashboard</a>
-        <a href="/admin/chart.html"><span class="nav-icon">📈</span> Chart Control</a>
-        <a href="/admin/users.html"><span class="nav-icon">👥</span> Users</a>
-        <a href="/admin/transactions.html"><span class="nav-icon">💳</span> Transactions</a>
-      </nav>
-      <div class="sidebar-footer">
-        <div class="sidebar-user"><strong id="sidebar-username">Admin</strong>Administrator</div>
-        <button class="btn btn-ghost btn-full btn-sm" onclick="logout()">Logout</button>
+    </header>
+
+    <div class="page-body">
+      <!-- Stats Cards -->
+      <div class="stats-grid">
+        <div class="card card-sm">
+          <div class="card-title">Total Members</div>
+          <div class="card-value" id="stat-users">—</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-title">Platform Balance</div>
+          <div class="card-value green" id="stat-balance">—</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-title">Pending Deposits</div>
+          <div class="card-value gold" id="stat-deposits">—</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-title">Pending Withdrawals</div>
+          <div class="card-value red" id="stat-withdrawals">—</div>
+        </div>
+        <div class="card card-sm">
+          <div class="card-title">Active Trades</div>
+          <div class="card-value gold" id="stat-pending-trades">—</div>
+        </div>
       </div>
-    </aside>
 
-    <main class="main-content">
-      <header class="topbar">
-        <div class="topbar-title">Admin Dashboard</div>
-        <div class="topbar-right">
-          <span id="last-updated" style="font-size:12px; color:var(--text-muted);"></span>
-          <button class="btn btn-ghost btn-sm" onclick="loadAll()">🔄 Refresh</button>
-        </div>
-      </header>
-
-      <div class="page-body">
-        <!-- Stats Cards -->
-        <div class="stats-grid">
-          <div class="card card-sm">
-            <div class="card-title">Total Members</div>
-            <div class="card-value" id="stat-users">—</div>
-          </div>
-          <div class="card card-sm">
-            <div class="card-title">Total Deposits (Approved)</div>
-            <div class="card-value green" id="stat-deposits">—</div>
-          </div>
-          <div class="card card-sm">
-            <div class="card-title">Total Withdrawals (Approved)</div>
-            <div class="card-value red" id="stat-withdrawals">—</div>
-          </div>
-          <div class="card card-sm">
-            <div class="card-title">Pending Trades</div>
-            <div class="card-value gold" id="stat-pending-trades">—</div>
-          </div>
-          <div class="card card-sm">
-            <div class="card-title">Platform Balance</div>
-            <div class="card-value" id="stat-balance">—</div>
-          </div>
-        </div>
-
-        <div class="grid-2">
-          <!-- Pending Deposits -->
-          <div class="card">
-            <h3 class="section-title">Pending Deposits</h3>
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr><th>User</th><th>Amount</th><th>Reference</th><th>Date</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="pending-deposits-tbody">
-                  <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <!-- Pending Withdrawals -->
-          <div class="card">
-            <h3 class="section-title">Pending Withdrawals</h3>
-            <div class="table-wrap">
-              <table class="table">
-                <thead>
-                  <tr><th>User</th><th>Amount</th><th>Details</th><th>Date</th><th>Actions</th></tr>
-                </thead>
-                <tbody id="pending-withdrawals-tbody">
-                  <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>
-                </tbody>
-              </table>
-            </div>
+      <div class="grid-2">
+        <!-- Pending Deposits -->
+        <div class="card">
+          <h3 class="section-title">Pending Deposits</h3>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>User</th><th>Amount</th><th>Reference</th><th>Date</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="pending-deposits-tbody">
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
 
-        <div class="grid-2" style="margin-top: 20px;">
-          <!-- Interest Rate Control -->
-          <div class="card">
-            <h3 class="section-title">Quick Interest Rate Update</h3>
-            <p style="font-size:13px; color:var(--text-muted); margin-bottom: 16px;">Updates rate for ALL active members immediately.</p>
-            <div class="form-group">
-              <label>Rate Per Second (e.g. 0.000035 = 0.0035%/sec)</label>
-              <input type="number" id="interest-rate-input" class="form-control" step="0.000001" min="0" placeholder="0.000035" />
-            </div>
-            <div style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--text-muted); margin-bottom:16px;">
-              <span>Daily equivalent:</span>
-              <strong id="daily-equiv" style="color:var(--accent-green);">—</strong>
-            </div>
-            <button class="btn btn-primary" id="save-rate-btn" onclick="saveInterestRate()">💾 Save Rate</button>
-          </div>
-
-          <!-- Recent Users -->
-          <div class="card">
-            <h3 class="section-title">Recent Members</h3>
-            <div id="recent-users-list"></div>
+        <!-- Pending Withdrawals -->
+        <div class="card">
+          <h3 class="section-title">Pending Withdrawals</h3>
+          <div class="table-wrap">
+            <table class="table">
+              <thead>
+                <tr><th>User</th><th>Amount</th><th>Account</th><th>Date</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="pending-withdrawals-tbody">
+                <tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading...</td></tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
-    </main>
-  </div>
 
-  <!-- Reject Modal -->
-  <div class="modal-overlay hidden" id="reject-modal">
-    <div class="modal">
-      <div class="modal-header">
-        <div class="modal-title">Reject Transaction</div>
-        <button class="modal-close" onclick="closeRejectModal()">×</button>
-      </div>
-      <div class="modal-body">
-        <div class="form-group">
-          <label>Reason for Rejection</label>
-          <input type="text" id="reject-reason" class="form-control" placeholder="e.g. Invalid reference number" />
+      <div class="grid-2" style="margin-top: 20px;">
+        <!-- Interest Rate Control -->
+        <div class="card">
+          <h3 class="section-title">Quick Interest Rate Update</h3>
+          <p style="font-size:13px; color:var(--text-muted); margin-bottom: 16px;">Updates rate for ALL active members immediately.</p>
+          <div class="form-group">
+            <label>Rate Per Second (e.g. 0.000035 = 0.0035%/sec)</label>
+            <input type="number" id="interest-rate-input" class="form-control" step="0.000001" min="0" placeholder="0.000035" />
+          </div>
+          <div style="display:flex; gap:8px; align-items:center; font-size:13px; color:var(--text-muted); margin-bottom:16px;">
+            <span>Daily equivalent:</span>
+            <strong id="daily-equiv" style="color:var(--accent-green);">—</strong>
+          </div>
+          <button class="btn btn-primary" id="save-rate-btn" onclick="saveInterestRate()">💾 Save Rate</button>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button class="btn btn-ghost" onclick="closeRejectModal()">Cancel</button>
-        <button class="btn btn-danger" onclick="confirmReject()">Reject</button>
+
+        <!-- Recent Members -->
+        <div class="card">
+          <h3 class="section-title">Recent Members</h3>
+          <div id="recent-users-list"></div>
+        </div>
       </div>
     </div>
+  </main>
+</div>
+
+<!-- Reject Modal -->
+<div class="modal-overlay hidden" id="reject-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Reject Transaction</div>
+      <button class="modal-close" onclick="closeRejectModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Reason for Rejection</label>
+        <input type="text" id="reject-reason" class="form-control" placeholder="e.g. Invalid reference number" />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-ghost" onclick="closeRejectModal()">Cancel</button>
+      <button class="btn btn-danger" onclick="confirmReject()">Reject</button>
+    </div>
   </div>
+</div>
 
-  <div id="toast-container"></div>
-  <script src="/assets/js/api.js"></script>
-  <script>
-    if (!redirectIfNotAdmin()) throw new Error('Not admin');
-    const user = getUser();
-    if (user) document.getElementById('sidebar-username').textContent = user.username;
+<div id="toast-container"></div>
+<script src="/assets/js/api.js"></script>
+<script>
+  if (!redirectIfNotAdmin()) throw new Error('Not admin');
+  const user = getUser();
+  if (user) document.getElementById('sidebar-username').textContent = user.username;
 
-    let rejectingId = null;
+  let rejectingId = null;
 
-    document.getElementById('interest-rate-input').addEventListener('input', function() {
-      const rate = parseFloat(this.value) || 0;
-      const daily = rate * 86400 * 100;
-      document.getElementById('daily-equiv').textContent = daily.toFixed(2) + '% per day';
-    });
+  document.getElementById('interest-rate-input').addEventListener('input', function () {
+    const rate = parseFloat(this.value) || 0;
+    const daily = rate * 86400 * 100;
+    document.getElementById('daily-equiv').textContent = daily.toFixed(2) + '% per day';
+  });
 
-    async function loadStats() {
-      const res = await apiFetch('/api/admin/stats');
-      if (!res || !res.ok) return;
-      const s = res.data;
-      document.getElementById('stat-users').textContent = s.total_users;
-      document.getElementById('stat-deposits').textContent = formatPHP(s.total_deposits);
-      document.getElementById('stat-withdrawals').textContent = formatPHP(s.total_withdrawals);
-      document.getElementById('stat-pending-trades').textContent = s.pending_trades;
-      document.getElementById('stat-balance').textContent = formatPHP(s.total_platform_balance);
-      document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
-    }
+  async function loadStats() {
+    const res = await apiFetch('/api/admin/stats');
+    if (!res || !res.ok) return;
+    const s = res.data;
+    document.getElementById('stat-users').textContent = s.totalMembers ?? '—';
+    document.getElementById('stat-balance').textContent = formatPHP(s.totalBalance);
+    document.getElementById('stat-deposits').textContent = s.pendingDeposits ?? '—';
+    document.getElementById('stat-withdrawals').textContent = s.pendingWithdrawals ?? '—';
+    document.getElementById('stat-pending-trades').textContent = s.activeTrades ?? '—';
+    document.getElementById('last-updated').textContent = 'Updated: ' + new Date().toLocaleTimeString();
+  }
 
-    async function loadPendingTx() {
-      const [depRes, wdRes] = await Promise.all([
-        apiFetch('/api/admin/transactions?status=pending&type=deposit'),
-        apiFetch('/api/admin/transactions?status=pending&type=withdrawal')
-      ]);
+  async function loadPendingTx() {
+    const [depRes, wdRes] = await Promise.all([
+      apiFetch('/api/admin/transactions?status=pending&type=deposit'),
+      apiFetch('/api/admin/transactions?status=pending&type=withdrawal')
+    ]);
+    const renderDepositRows = (txList) => {
+      if (!txList || !txList.length) return '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No pending deposits</td></tr>';
+      return txList.map(t => `<tr><td class="primary">${t.members?.username||'—'}</td><td class="primary">${formatPHP(t.amount)}</td><td style="font-size:12px">${t.reference_number||'--'}</td><td style="font-size:12px">${formatDate(t.created_at)}</td><td><div style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button></div></td></tr>`).join('');
+    };
+    const renderWithdrawRows = (txList) => {
+      if (!txList || !txList.length) return '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No pending withdrawals</td></tr>';
+      return txList.map(t => `<tr><td class="primary">${t.members?.username||'—'}</td><td class="primary">${formatPHP(t.amount)}</td><td style="font-size:12px">${t.account_name||'--'} ${t.account_number?'· '+t.account_number:''}</td><td style="font-size:12px">${formatDate(t.created_at)}</td><td><div style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button></div></td></tr>`).join('');
+    };
+    document.getElementById('pending-deposits-tbody').innerHTML = renderDepositRows(depRes?.data?.transactions);
+    document.getElementById('pending-withdrawals-tbody').innerHTML = renderWithdrawRows(wdRes?.data?.transactions);
+  }
 
-      const renderRows = (txList, cols) => {
-        if (!txList || !txList.length) return '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No pending items</td></tr>';
-        return txList.map(t => `
-          <tr>
-            <td class="primary">${t.users?.username || '—'}</td>
-            <td class="primary">${formatPHP(t.amount)}</td>
-            <td style="font-size:12px; color:var(--text-muted);">${t.reference_code || t.notes?.substring(0,30) || '—'}</td>
-            <td style="font-size:12px;">${formatDate(t.created_at)}</td>
-            <td>
-              <div style="display:flex; gap:6px;">
-                <button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button>
-                <button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button>
-              </div>
-            </td>
-          </tr>
-        `).join('');
-      };
+  async function loadRecentUsers() {
+    const res = await apiFetch('/api/admin/members');
+    if (!res || !res.ok) return;
+    const recent = (res.data.members || []).slice(0, 6);
+    document.getElementById('recent-users-list').innerHTML = recent.length
+      ? recent.map(u => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:14px">${u.username}</div><div style="font-size:12px;color:var(--text-muted)">${u.email}</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:600;color:var(--accent-gold)">${formatPHP(u.balance)}</div><div style="font-size:11px;color:${u.is_active?'var(--accent-green)':'var(--accent-red)'}">${u.is_active?'Active':'Inactive'}</div></div></div>`).join('')
+      : '<p style="color:var(--text-muted);font-size:13px">No members yet.</p>';
+  }
 
-      document.getElementById('pending-deposits-tbody').innerHTML = renderRows(depRes?.data?.transactions);
-      document.getElementById('pending-withdrawals-tbody').innerHTML = renderRows(wdRes?.data?.transactions);
-    }
+  async function approveTx(id) {
+    const res = await apiFetch(`/api/admin/transactions/${id}`, 'PATCH', { status: 'approved' });
+    if (res && res.ok) { showToast('Approved', 'Transaction approved', 'success'); loadAll(); }
+    else { showToast('Error', res?.data?.error||'Failed', 'error'); }
+  }
 
-    async function loadRecentUsers() {
-      const res = await apiFetch('/api/admin/users');
-      if (!res || !res.ok) return;
-      const recent = (res.data.users || []).slice(0, 6);
-      document.getElementById('recent-users-list').innerHTML = recent.map(u => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
-          <div>
-            <div style="font-weight:600; font-size:14px;">${u.username}</div>
-            <div style="font-size:12px; color:var(--text-muted);">${u.email}</div>
-          </div>
-          <div style="text-align:right;">
-            <div style="font-size:14px; font-weight:600; color:var(--accent-gold);">${formatPHP(u.balance)}</div>
-            <div style="font-size:11px; color:${u.is_active ? 'var(--accent-green)' : 'var(--accent-red)'};">${u.is_active ? 'Active' : 'Inactive'}</div>
-          </div>
-        </div>
-      `).join('');
-    }
+  function openRejectModal(id) { rejectingId=id; document.getElementById('reject-reason').value=''; document.getElementById('reject-modal').classList.remove('hidden'); }
+  function closeRejectModal() { rejectingId=null; document.getElementById('reject-modal').classList.add('hidden'); }
 
-    async function approveTx(id) {
-      const res = await apiFetch(`/api/admin/transactions/${id}/approve`, 'POST');
-      if (res && res.ok) {
-        showToast('Approved', 'Transaction approved successfully', 'success');
-        loadAll();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to approve', 'error');
-      }
-    }
+  async function confirmReject() {
+    if (!rejectingId) return;
+    const reason = document.getElementById('reject-reason').value.trim();
+    const res = await apiFetch(`/api/admin/transactions/${rejectingId}`, 'PATCH', { status: 'rejected', admin_note: reason });
+    if (res && res.ok) { showToast('Rejected', 'Transaction rejected', 'info'); closeRejectModal(); loadAll(); }
+    else { showToast('Error', res?.data?.error||'Failed', 'error'); }
+  }
 
-    function openRejectModal(id) {
-      rejectingId = id;
-      document.getElementById('reject-reason').value = '';
-      document.getElementById('reject-modal').classList.remove('hidden');
-    }
+  async function saveInterestRate() {
+    const rate = parseFloat(document.getElementById('interest-rate-input').value);
+    if (!rate || rate <= 0) { showToast('Error', 'Enter a valid rate', 'error'); return; }
+    const btn = document.getElementById('save-rate-btn');
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const res = await apiFetch('/api/admin/members');
+    if (res && res.ok) {
+      const members = res.data.members || [];
+      await Promise.all(members.filter(m=>m.is_active).map(m => apiFetch(`/api/admin/members/${m.id}`,'PATCH',{interest_rate_per_second:rate})));
+      showToast('Rate Updated',`${(rate*86400*100).toFixed(2)}% per day`,'success');
+    } else { showToast('Error','Failed to update rate','error'); }
+    btn.disabled=false; btn.textContent='💾 Save Rate';
+  }
 
-    function closeRejectModal() {
-      rejectingId = null;
-      document.getElementById('reject-modal').classList.add('hidden');
-    }
-
-    async function confirmReject() {
-      if (!rejectingId) return;
-      const reason = document.getElementById('reject-reason').value.trim();
-      const res = await apiFetch(`/api/admin/transactions/${rejectingId}/reject`, 'POST', { reason });
-      if (res && res.ok) {
-        showToast('Rejected', 'Transaction rejected', 'info');
-        closeRejectModal();
-        loadAll();
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to reject', 'error');
-      }
-    }
-
-    async function saveInterestRate() {
-      const rate = parseFloat(document.getElementById('interest-rate-input').value);
-      if (!rate || rate <= 0) { showToast('Error', 'Enter a valid rate', 'error'); return; }
-
-      const btn = document.getElementById('save-rate-btn');
-      btn.disabled = true;
-      btn.textContent = 'Saving...';
-
-      const res = await apiFetch('/api/admin/interest/config', 'POST', { rate_per_second: rate });
-      btn.disabled = false;
-      btn.textContent = '💾 Save Rate';
-
-      if (res && res.ok) {
-        showToast('Rate Updated', `New rate: ${(rate * 100).toFixed(6)}% per second`, 'success');
-      } else {
-        showToast('Error', res?.data?.error || 'Failed to update rate', 'error');
-      }
-    }
-
-    function loadAll() {
-      loadStats();
-      loadPendingTx();
-      loadRecentUsers();
-    }
-
-    loadAll();
-    setInterval(loadAll, 30000);
-  </script>
+  function loadAll() { loadStats(); loadPendingTx(); loadRecentUsers(); }
+  loadAll();
+  setInterval(loadAll, 30000);
+</script>
 </body>
 </html>
