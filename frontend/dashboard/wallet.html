@@ -167,25 +167,32 @@ loadTicker();loadDashMini();setInterval(loadTicker,8000);
 let baseInterest=0,interestRate=0.000035,interestStart=Date.now(),walletBalance=0;
 
 async function loadWallet(){
-  const r=await apiFetch('/api/member/dashboard');
-  if(!r||!r.ok)return;
-  const m=r.data.data?.member;if(!m)return;
-  const fmt=v=>'₱'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
-  walletBalance=parseFloat(m.balance||0);
-  document.getElementById('w-main').textContent=fmt(m.balance);
-  baseInterest=parseFloat(m.interest_earned||0);
-  interestRate=parseFloat(m.interest_rate_per_second||0.000035);
+  const [dashR,txR,tradeR]=await Promise.all([
+    apiFetch('/api/member/dashboard'),
+    apiFetch('/api/member/transactions'),
+    apiFetch('/api/member/trades')
+  ]);
+  if(!dashR||!dashR.ok)return;
+  const d=dashR.data.data;if(!d)return;
+  const txns=txR?.data?.data?.transactions||[];
+  const trades=tradeR?.data?.data?.trades||[];
+  const fmt=v=>'\u20b1'+parseFloat(v||0).toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+  walletBalance=parseFloat(d.balance||0);
+  interestRate=parseFloat(d.interest_rate_per_second||0.000035);
   interestStart=Date.now();
-  document.getElementById('w-interest').textContent=fmt(m.interest_earned);
-  document.getElementById('w-rate').textContent='Rate: '+interestRate.toFixed(7)+'/sec';
-  document.getElementById('int-rate-display').textContent='+₱'+interestRate.toFixed(7)+'/sec';
-  const daily=interestRate*86400*parseFloat(m.balance||0);
-  document.getElementById('w-daily').textContent=fmt(daily);
-  const pnl=parseFloat(m.trade_pnl||0);
+  const interestEarned=txns.filter(t=>t.type==='interest'&&t.status==='approved').reduce((s,t)=>s+parseFloat(t.amount||0),0);
+  baseInterest=interestEarned;
+  document.getElementById('w-main').textContent=fmt(d.balance);
+  document.getElementById('w-interest').textContent=fmt(interestEarned);
+  document.getElementById('w-rate').textContent='Rate: '+(interestRate*100).toFixed(6)+'%/sec';
+  document.getElementById('int-rate-display').textContent='+\u20b1'+(interestRate*walletBalance).toFixed(6)+'/sec';
+  const daily=interestRate*86400*walletBalance;
+  document.getElementById('w-daily').textContent=fmt(daily)+' est./day';
+  const pnl=trades.reduce((s,t)=>s+(t.result==='win'?parseFloat(t.payout_amount||0)-parseFloat(t.stake||0):(t.result==='loss'?-parseFloat(t.stake||0):0)),0);
   const pnlEl=document.getElementById('w-pnl');
-  pnlEl.textContent=(pnl>=0?'+':'')+fmt(Math.abs(pnl));
+  pnlEl.textContent=(pnl>=0?'+':'-')+fmt(Math.abs(pnl));
   pnlEl.style.color=pnl>=0?'var(--green)':'var(--red)';
-  document.getElementById('w-pnl-sub').textContent=pnl>=0?'Profitable trading':'Net loss';
+  document.getElementById('w-pnl-sub').textContent=trades.filter(t=>t.result&&t.result!=='pending').length+' completed trades';
 }
 
 function tickInterest(){
