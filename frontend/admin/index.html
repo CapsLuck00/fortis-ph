@@ -155,7 +155,7 @@
   async function loadStats() {
     const res = await apiFetch('/api/admin/stats');
     if (!res || !res.ok) return;
-    const s = res.data;
+    const s = res.data.data;  // backend wraps in { ok, data: {...} }
     document.getElementById('stat-users').textContent = s.totalMembers ?? '—';
     document.getElementById('stat-balance').textContent = formatPHP(s.totalBalance);
     document.getElementById('stat-deposits').textContent = s.pendingDeposits ?? '—';
@@ -169,59 +169,132 @@
       apiFetch('/api/admin/transactions?status=pending&type=deposit'),
       apiFetch('/api/admin/transactions?status=pending&type=withdrawal')
     ]);
+
     const renderDepositRows = (txList) => {
       if (!txList || !txList.length) return '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No pending deposits</td></tr>';
-      return txList.map(t => `<tr><td class="primary">${t.members?.username||'—'}</td><td class="primary">${formatPHP(t.amount)}</td><td style="font-size:12px">${t.reference_number||'--'}</td><td style="font-size:12px">${formatDate(t.created_at)}</td><td><div style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button></div></td></tr>`).join('');
+      return txList.map(t => `
+        <tr>
+          <td class="primary">${t.members?.username || '—'}</td>
+          <td class="primary">${formatPHP(t.amount)}</td>
+          <td style="font-size:12px; color:var(--text-muted);">${t.reference_number || '—'}</td>
+          <td style="font-size:12px;">${formatDate(t.created_at)}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button>
+              <button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button>
+            </div>
+          </td>
+        </tr>`).join('');
     };
+
     const renderWithdrawRows = (txList) => {
       if (!txList || !txList.length) return '<tr><td colspan="5" style="text-align:center;color:var(--text-muted);padding:20px;">No pending withdrawals</td></tr>';
-      return txList.map(t => `<tr><td class="primary">${t.members?.username||'—'}</td><td class="primary">${formatPHP(t.amount)}</td><td style="font-size:12px">${t.account_name||'--'} ${t.account_number?'· '+t.account_number:''}</td><td style="font-size:12px">${formatDate(t.created_at)}</td><td><div style="display:flex;gap:6px"><button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button><button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button></div></td></tr>`).join('');
+      return txList.map(t => `
+        <tr>
+          <td class="primary">${t.members?.username || '—'}</td>
+          <td class="primary">${formatPHP(t.amount)}</td>
+          <td style="font-size:12px; color:var(--text-muted);">${t.account_name || '—'} ${t.account_number ? '· ' + t.account_number : ''}</td>
+          <td style="font-size:12px;">${formatDate(t.created_at)}</td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <button class="btn btn-success btn-sm" onclick="approveTx('${t.id}')">✓</button>
+              <button class="btn btn-danger btn-sm" onclick="openRejectModal('${t.id}')">✗</button>
+            </div>
+          </td>
+        </tr>`).join('');
     };
-    document.getElementById('pending-deposits-tbody').innerHTML = renderDepositRows(depRes?.data?.transactions);
-    document.getElementById('pending-withdrawals-tbody').innerHTML = renderWithdrawRows(wdRes?.data?.transactions);
+
+    document.getElementById('pending-deposits-tbody').innerHTML = renderDepositRows(depRes?.data?.data?.transactions);
+    document.getElementById('pending-withdrawals-tbody').innerHTML = renderWithdrawRows(wdRes?.data?.data?.transactions);
   }
 
   async function loadRecentUsers() {
+    // FIXED: correct endpoint /api/admin/members
     const res = await apiFetch('/api/admin/members');
     if (!res || !res.ok) return;
-    const recent = (res.data.members || []).slice(0, 6);
+    const recent = (res.data.data?.members || []).slice(0, 6);
     document.getElementById('recent-users-list').innerHTML = recent.length
-      ? recent.map(u => `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)"><div><div style="font-weight:600;font-size:14px">${u.username}</div><div style="font-size:12px;color:var(--text-muted)">${u.email}</div></div><div style="text-align:right"><div style="font-size:14px;font-weight:600;color:var(--accent-gold)">${formatPHP(u.balance)}</div><div style="font-size:11px;color:${u.is_active?'var(--accent-green)':'var(--accent-red)'}">${u.is_active?'Active':'Inactive'}</div></div></div>`).join('')
-      : '<p style="color:var(--text-muted);font-size:13px">No members yet.</p>';
+      ? recent.map(u => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0; border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-weight:600; font-size:14px;">${u.username}</div>
+            <div style="font-size:12px; color:var(--text-muted);">${u.email}</div>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:14px; font-weight:600; color:var(--accent-gold);">${formatPHP(u.balance)}</div>
+            <div style="font-size:11px; color:${u.is_active ? 'var(--accent-green)' : 'var(--accent-red)'};">${u.is_active ? 'Active' : 'Inactive'}</div>
+          </div>
+        </div>`).join('')
+      : '<p style="color:var(--text-muted); font-size:13px;">No members yet.</p>';
   }
 
   async function approveTx(id) {
+    // FIXED: use PATCH with status body, not POST /approve
     const res = await apiFetch(`/api/admin/transactions/${id}`, 'PATCH', { status: 'approved' });
-    if (res && res.ok) { showToast('Approved', 'Transaction approved', 'success'); loadAll(); }
-    else { showToast('Error', res?.data?.error||'Failed', 'error'); }
+    if (res && res.ok) {
+      showToast('Approved', 'Transaction approved successfully', 'success');
+      loadAll();
+    } else {
+      showToast('Error', res?.data?.error || 'Failed to approve', 'error');
+    }
   }
 
-  function openRejectModal(id) { rejectingId=id; document.getElementById('reject-reason').value=''; document.getElementById('reject-modal').classList.remove('hidden'); }
-  function closeRejectModal() { rejectingId=null; document.getElementById('reject-modal').classList.add('hidden'); }
+  function openRejectModal(id) {
+    rejectingId = id;
+    document.getElementById('reject-reason').value = '';
+    document.getElementById('reject-modal').classList.remove('hidden');
+  }
+
+  function closeRejectModal() {
+    rejectingId = null;
+    document.getElementById('reject-modal').classList.add('hidden');
+  }
 
   async function confirmReject() {
     if (!rejectingId) return;
     const reason = document.getElementById('reject-reason').value.trim();
+    // FIXED: use PATCH with status + admin_note body
     const res = await apiFetch(`/api/admin/transactions/${rejectingId}`, 'PATCH', { status: 'rejected', admin_note: reason });
-    if (res && res.ok) { showToast('Rejected', 'Transaction rejected', 'info'); closeRejectModal(); loadAll(); }
-    else { showToast('Error', res?.data?.error||'Failed', 'error'); }
+    if (res && res.ok) {
+      showToast('Rejected', 'Transaction rejected', 'info');
+      closeRejectModal();
+      loadAll();
+    } else {
+      showToast('Error', res?.data?.error || 'Failed to reject', 'error');
+    }
   }
 
   async function saveInterestRate() {
     const rate = parseFloat(document.getElementById('interest-rate-input').value);
     if (!rate || rate <= 0) { showToast('Error', 'Enter a valid rate', 'error'); return; }
+
     const btn = document.getElementById('save-rate-btn');
-    btn.disabled = true; btn.textContent = 'Saving...';
+    btn.disabled = true;
+    btn.textContent = 'Saving...';
+
+    // Update all active members' interest rate directly
     const res = await apiFetch('/api/admin/members');
     if (res && res.ok) {
-      const members = res.data.members || [];
-      await Promise.all(members.filter(m=>m.is_active).map(m => apiFetch(`/api/admin/members/${m.id}`,'PATCH',{interest_rate_per_second:rate})));
-      showToast('Rate Updated',`${(rate*86400*100).toFixed(2)}% per day`,'success');
-    } else { showToast('Error','Failed to update rate','error'); }
-    btn.disabled=false; btn.textContent='💾 Save Rate';
+      const members = res.data.data?.members || [];
+      const updates = members.filter(m => m.is_active).map(m =>
+        apiFetch(`/api/admin/members/${m.id}`, 'PATCH', { interest_rate_per_second: rate })
+      );
+      await Promise.all(updates);
+      showToast('Rate Updated', `${(rate * 86400 * 100).toFixed(2)}% per day applied to ${updates.length} members`, 'success');
+    } else {
+      showToast('Error', 'Failed to update rate', 'error');
+    }
+
+    btn.disabled = false;
+    btn.textContent = '💾 Save Rate';
   }
 
-  function loadAll() { loadStats(); loadPendingTx(); loadRecentUsers(); }
+  function loadAll() {
+    loadStats();
+    loadPendingTx();
+    loadRecentUsers();
+  }
+
   loadAll();
   setInterval(loadAll, 30000);
 </script>
